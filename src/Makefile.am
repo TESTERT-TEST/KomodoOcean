@@ -716,8 +716,6 @@ include Makefile.ktest.include
 #include Makefile.gtest.include
 endif
 
-#include Makefile.zcash.include
-
 if ENABLE_QT
 include Makefile.qt.include
 endif
