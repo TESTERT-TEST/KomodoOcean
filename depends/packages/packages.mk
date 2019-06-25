@@ -1,6 +1,6 @@
 rust_packages := rust librustzcash
 
-zcash_packages := libgmp libsodium
+zcash_packages := libsodium
 
 qt_native_packages = native_protobuf
 qt_packages = qrencode protobuf
