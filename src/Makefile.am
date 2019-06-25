@@ -656,13 +656,7 @@ libzcash_a_SOURCES = \
 	zcash/Note.cpp \
 	zcash/prf.cpp \
 	zcash/util.cpp \
-  zcash/zip32.cpp \
-	zcash/circuit/commitment.tcc \
-	zcash/circuit/gadget.tcc \
-	zcash/circuit/merkle.tcc \
-	zcash/circuit/note.tcc \
-	zcash/circuit/prfs.tcc \
-	zcash/circuit/utils.tcc
+	zcash/zip32.cpp
 
 libzcash_a_CPPFLAGS = -fPIC -DBINARY_OUTPUT -DCURVE_ALT_BN128 -DBOOST_SPIRIT_THREADSAFE -DHAVE_BUILD_INFO -D__STDC_FORMAT_MACROS $(HARDENED_CPPFLAGS) -pipe -O1 -g -Wstack-protector -fstack-protector-all -fPIE -fvisibility=hidden -DSTATIC $(BITCOIN_INCLUDES)
 if HAVE_OPENMP
