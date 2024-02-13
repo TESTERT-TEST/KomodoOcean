@@ -135,4 +135,6 @@ src/qt/komodo-qt
 
 # chain files for iguana
 src/qt/*_7776
+src/*_7776
+*_7776
 
