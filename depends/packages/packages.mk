@@ -1,10 +1,6 @@
 rust_packages := rust librustzcash
 
-ifeq ($(build_os),darwin)
-zcash_packages := libsnark libgmp libsodium
-else
-	zcash_packages := libgmp libsodium
-endif
+zcash_packages := libgmp libsodium
 
 qt_native_packages = native_protobuf
 qt_packages = qrencode protobuf
@@ -62,8 +58,5 @@ ifneq ($(build_os),darwin)
 darwin_native_packages += native_cctools native_libtapi native_cdrkit
 ifeq ($(strip $(FORCE_USE_SYSTEM_CLANG)),)
 darwin_native_packages+= native_clang
-endif
-ifeq ($(host_os),darwin)
-packages += libsnark
 endif
 endif

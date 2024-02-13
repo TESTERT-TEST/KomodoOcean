@@ -489,7 +489,6 @@ qt_komodo_qt_LIBTOOLFLAGS = --tag CXX
 
 qt_komodo_qt_LDADD += \
   $(LIBZCASH) \
-  $(LIBSNARK) \
   $(LIBZCASH_LIBS) \
   $(LIBCRYPTOCONDITIONS)
 

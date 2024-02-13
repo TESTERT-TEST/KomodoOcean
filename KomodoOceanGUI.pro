@@ -2,7 +2,7 @@ TEMPLATE = app
 TARGET = KomodoOceanGUI
 VERSION = 0.1.0.0
 
-INCLUDEPATH += src src\qt src\libsnark src\protobuf src\secp256k1 src\secp256k1\include src\leveldb\include src\leveldb\helpers\memenv src\leveldb src\univalue\include src\libevent\include src\libevent\compat src\cryptoconditions\include src\cryptoconditions src\cryptoconditions\src\asn
+INCLUDEPATH += src src\qt src\protobuf src\secp256k1 src\secp256k1\include src\leveldb\include src\leveldb\helpers\memenv src\leveldb src\univalue\include src\libevent\include src\libevent\compat src\cryptoconditions\include src\cryptoconditions src\cryptoconditions\src\asn
 
 MINIUPNPC_INCLUDE_PATH = src\miniupnpc
 
@@ -329,13 +329,6 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\libevent\signal.c \
     src\libevent\strlcpy.c \
     src\libevent\win32select.c \
-    src\libsnark\algebra\curves\alt_bn128\alt_bn128_g1.cpp \
-    src\libsnark\algebra\curves\alt_bn128\alt_bn128_g2.cpp \
-    src\libsnark\algebra\curves\alt_bn128\alt_bn128_init.cpp \
-    src\libsnark\algebra\curves\alt_bn128\alt_bn128_pairing.cpp \
-    src\libsnark\algebra\curves\alt_bn128\alt_bn128_pp.cpp \
-    src\libsnark\common\profiling.cpp \
-    src\libsnark\common\utils.cpp \
     src\main.cpp \
     src\merkleblock.cpp \
     src\metrics.cpp \
