@@ -656,10 +656,6 @@ libzcash_a_SOURCES = \
 	zcash/zip32.cpp
 
 libzcash_a_CPPFLAGS = -fPIC -DBINARY_OUTPUT -DCURVE_ALT_BN128 -DBOOST_SPIRIT_THREADSAFE -DHAVE_BUILD_INFO -D__STDC_FORMAT_MACROS $(HARDENED_CPPFLAGS) -pipe -O1 -g -Wstack-protector -fstack-protector-all -fPIE -fvisibility=hidden -DSTATIC $(BITCOIN_INCLUDES)
-if HAVE_OPENMP
-libzcash_a_CPPFLAGS += -DMULTICORE -fopenmp
-endif
-
 libzcash_a_CXXFLAGS = $(HARDENED_CXXFLAGS) -fwrapv -fno-strict-aliasing
 
 #libzcash_a_LDFLAGS = $(HARDENED_LDFLAGS)
