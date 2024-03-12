@@ -23,9 +23,9 @@
 
 #include <QApplication>
 #include <QCloseEvent>
-#include <QDesktopWidget>
 #include <QPainter>
 #include <QRadialGradient>
+#include <QScreen>
 
 SplashScreen::SplashScreen(const NetworkStyle *networkStyle) :
     QWidget(), curAlignment(0)
@@ -131,7 +131,7 @@ SplashScreen::SplashScreen(const NetworkStyle *networkStyle) :
     QRect r(QPoint(), QSize(pixmap.size().width()/devicePixelRatio,pixmap.size().height()/devicePixelRatio));
     resize(r.size());
     setFixedSize(r.size());
-    move(QApplication::desktop()->screenGeometry().center() - r.center());
+    move(QGuiApplication::primaryScreen()->geometry().center() - r.center());
 
     subscribeToCoreSignals();
     installEventFilter(this);
