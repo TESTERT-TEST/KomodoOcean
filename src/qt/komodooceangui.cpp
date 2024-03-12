@@ -1267,7 +1267,7 @@ UnitDisplayStatusBarControl::UnitDisplayStatusBarControl(const PlatformStyle *pl
     const QFontMetrics fm(font());
     for (const KomodoUnits::Unit unit : units)
     {
-        max_width = qMax(max_width, fm.width(KomodoUnits::name(unit)));
+        max_width = qMax(max_width, GUIUtil::TextWidth(fm, KomodoUnits::name(unit)));
     }
     setMinimumSize(max_width, 0);
     setAlignment(Qt::AlignRight | Qt::AlignVCenter);

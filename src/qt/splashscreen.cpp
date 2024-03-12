@@ -8,11 +8,12 @@
 
 #include "splashscreen.h"
 
-#include "networkstyle.h"
-
 #include "clientversion.h"
 #include "init.h"
 #include "util.h"
+
+#include "guiutil.h"
+#include "networkstyle.h"
 #include "ui_interface.h"
 #include "version.h"
 
@@ -81,21 +82,21 @@ SplashScreen::SplashScreen(const NetworkStyle *networkStyle) :
     // check font size and drawing with
     pixPaint.setFont(QFont(font, 33*fontFactor));
     QFontMetrics fm = pixPaint.fontMetrics();
-    int titleTextWidth = fm.width(titleText);
+    int titleTextWidth = GUIUtil::TextWidth(fm, titleText);
     if (titleTextWidth > 176) {
         fontFactor = fontFactor * 176 / titleTextWidth;
     }
 
     pixPaint.setFont(QFont(font, 33*fontFactor));
     fm = pixPaint.fontMetrics();
-    titleTextWidth  = fm.width(titleText);
+    titleTextWidth  = GUIUtil::TextWidth(fm, titleText);
     pixPaint.drawText(pixmap.width()/devicePixelRatio-titleTextWidth-paddingRight,paddingTop,titleText);
 
     pixPaint.setFont(QFont(font, 15*fontFactor));
 
     // if the version string is to long, reduce size
     fm = pixPaint.fontMetrics();
-    int versionTextWidth  = fm.width(versionText);
+    int versionTextWidth  = GUIUtil::TextWidth(fm, versionText);
     if(versionTextWidth > titleTextWidth+paddingRight-10) {
         pixPaint.setFont(QFont(font, 10*fontFactor));
         titleVersionVSpace -= 5;
@@ -117,7 +118,7 @@ SplashScreen::SplashScreen(const NetworkStyle *networkStyle) :
         boldFont.setWeight(QFont::Bold);
         pixPaint.setFont(boldFont);
         fm = pixPaint.fontMetrics();
-        int titleAddTextWidth  = fm.width(titleAddText);
+        int titleAddTextWidth  = GUIUtil::TextWidth(fm, titleAddText);
         pixPaint.drawText(pixmap.width()/devicePixelRatio-titleAddTextWidth-10,15,titleAddText);
     }
 

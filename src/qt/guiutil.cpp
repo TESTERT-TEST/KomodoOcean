@@ -1053,4 +1053,13 @@ void LogQtInfo()
     }
 }
 
+int TextWidth(const QFontMetrics& fm, const QString& text)
+{
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
+    return fm.horizontalAdvance(text);
+#else
+    return fm.width(text);
+#endif
+}
+
 } // namespace GUIUtil
