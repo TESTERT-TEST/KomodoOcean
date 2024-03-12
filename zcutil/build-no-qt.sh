@@ -111,4 +111,4 @@ HOST="$HOST" BUILD="$BUILD" "$MAKE" "$@" -C ./depends/ V=1 NO_QT=1
 #./makecustom
 #cd $WD
 
-"$MAKE" "$@" V=1
+"$MAKE" "$@" # V=1

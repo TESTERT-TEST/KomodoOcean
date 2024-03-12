@@ -6,6 +6,7 @@
 
 #include "komodounits.h"
 #include "guiconstants.h"
+#include "guiutil.h"
 #include "qvaluecombobox.h"
 
 #include <QApplication>
@@ -99,7 +100,7 @@ public:
 
             const QFontMetrics fm(fontMetrics());
             int h = lineEdit()->minimumSizeHint().height();
-            int w = fm.width(KomodoUnits::format(KomodoUnits::KMD, KomodoUnits::maxMoney(), false, KomodoUnits::separatorAlways));
+            int w = GUIUtil::TextWidth(fm, KomodoUnits::format(KomodoUnits::KMD, KomodoUnits::maxMoney(), false, KomodoUnits::separatorAlways));
             w += 2; // cursor blinking space
 
             QStyleOptionSpinBox opt;
@@ -171,7 +172,7 @@ protected:
         if (text().isEmpty()) // Allow step-up with empty field
             return StepUpEnabled;
 
-        StepEnabled rv = 0;
+        StepEnabled rv = StepNone;
         bool valid = false;
         CAmount val = value(&valid);
         if(valid)
