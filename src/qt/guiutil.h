@@ -260,7 +260,14 @@ int TextWidth(const QFontMetrics& fm, const QString& text);
  */
 QDateTime StartOfDay(const QDate& date);
 
-} // namespace GUIUtil
+
+/**
+ * Returns true if pixmap has been set.
+ *
+ * QPixmap* QLabel::pixmap() is deprecated since Qt 5.15.
+ */
+bool HasPixmap(const QLabel* label);
+QImage GetImage(const QLabel* label);
 
 /**
  * Splits the string into substrings wherever separator occurs, and returns
@@ -281,5 +288,7 @@ QStringList SplitSkipEmptyParts(const QString& string, const SeparatorType& sepa
     return string.split(separator, QString::SkipEmptyParts);
 #endif
 }
+
+} // namespace GUIUtil
 
 #endif // KOMODO_QT_GUIUTIL_H
