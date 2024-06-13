@@ -30,8 +30,10 @@ int ed25519_create_seed(unsigned char *seed) {
         return 1;
     }
 
-    fread(seed, 1, 32, f);
+    const size_t items_read = fread(seed, 1, 32, f);
     fclose(f);
+    if (items_read != 32)
+        return 1;
 #endif
 
     return 0;

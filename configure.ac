@@ -29,8 +29,17 @@ AH_TOP([#ifndef KOMODO_CONFIG_H])
 AH_TOP([#define KOMODO_CONFIG_H])
 AH_BOTTOM([#endif //KOMODO_CONFIG_H])
 
+dnl Unless the user specified ARFLAGS, force it to be cr
+dnl This is also the default as-of libtool 2.4.7
+AC_ARG_VAR([ARFLAGS], [Flags for the archiver, defaults to <cr> if not set])
+if test "${ARFLAGS+set}" != "set"; then
+  ARFLAGS="cr"
+fi
+
 dnl faketime breaks configure and is only needed for make. Disable it here.
 unset FAKETIME
+
+
 
 dnl Automake init set-up and checks
 AM_INIT_AUTOMAKE([no-define subdir-objects foreign])
@@ -367,25 +376,26 @@ case $host in
      use_pkgconfig=no
 
      TARGET_OS=windows
-     AC_CHECK_LIB([mingwthrd],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([kernel32],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([user32],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([gdi32],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([comdlg32],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([winspool],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([winmm],      [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([mingwthrd],    [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([kernel32],     [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([user32],       [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([gdi32],        [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([comdlg32],     [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([winspool],     [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([winmm],        [main],, AC_MSG_ERROR(lib missing))
      AC_CHECK_LIB([shell32],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([comctl32],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([ole32],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([oleaut32],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([uuid],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([rpcrt4],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([advapi32],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([ws2_32],      [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([comctl32],     [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([ole32],        [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([oleaut32],     [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([uuid],         [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([rpcrt4],       [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([advapi32],     [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([ws2_32],       [main],, AC_MSG_ERROR(lib missing))
      AC_CHECK_LIB([mswsock],      [main],, AC_MSG_ERROR(lib missing))
      AC_CHECK_LIB([shlwapi],      [main],, AC_MSG_ERROR(lib missing))
-     AC_CHECK_LIB([iphlpapi],      [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([iphlpapi],     [main],, AC_MSG_ERROR(lib missing))
      AC_CHECK_LIB([crypt32],      [main],, AC_MSG_ERROR(lib missing))
+     AC_CHECK_LIB([ntdll],        [main],, AC_MSG_ERROR(lib missing))
 
      # -static is interpreted by libtool, where it has a different meaning.
      # In libtool-speak, it's -all-static.

@@ -5408,8 +5408,7 @@ bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& sta
     // Check proof of work
     if ( (!chainName.isKMD() || nHeight < 235300 || nHeight > 236000) && block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams))
     {
-        cout << block.nBits << " block.nBits vs. calc " << GetNextWorkRequired(pindexPrev, &block, consensusParams) <<
-                               " for block #" << nHeight << endl;
+        LogPrintf("%u block.nBits vs. calc %u for block #%d\n", block.nBits, GetNextWorkRequired(pindexPrev, &block, consensusParams), nHeight);
         return state.DoS(100, error("%s: incorrect proof of work", __func__),
                         REJECT_INVALID, "bad-diffbits");
     }

@@ -1181,9 +1181,9 @@ void komodo_args(char *argv0)
         {
             if ( equihash_params_possible(ASSETCHAINS_NK[0], ASSETCHAINS_NK[1]) == -1 ) 
             {
-                LogPrintf("equihash values N.%li and K.%li are not currently available\n", ASSETCHAINS_NK[0], ASSETCHAINS_NK[1]);
+                LogPrintf("equihash values N.%" PRIu64 " and K.%" PRIu64 " are not currently available\n", ASSETCHAINS_NK[0], ASSETCHAINS_NK[1]);
                 exit(0);
-            } else LogPrintf("ASSETCHAINS_ALGO, algorithm set to equihash with N.%li and K.%li\n", ASSETCHAINS_NK[0], ASSETCHAINS_NK[1]);
+            } else LogPrintf("ASSETCHAINS_ALGO, algorithm set to equihash with N.%" PRIu64 " and K.%" PRIu64 "\n", ASSETCHAINS_NK[0], ASSETCHAINS_NK[1]);
         }
         if (i == ASSETCHAINS_NUMALGOS)
         {
@@ -1194,7 +1194,7 @@ void komodo_args(char *argv0)
         if ( ASSETCHAINS_LASTERA < 1 || ASSETCHAINS_LASTERA > ASSETCHAINS_MAX_ERAS )
         {
             ASSETCHAINS_LASTERA = 1;
-            LogPrintf("ASSETCHAINS_LASTERA, if specified, must be between 1 and %u. ASSETCHAINS_LASTERA set to %lu\n", ASSETCHAINS_MAX_ERAS, ASSETCHAINS_LASTERA);
+            LogPrintf("ASSETCHAINS_LASTERA, if specified, must be between 1 and %u. ASSETCHAINS_LASTERA set to %" PRIu64 "\n", ASSETCHAINS_MAX_ERAS, ASSETCHAINS_LASTERA);
         }
         ASSETCHAINS_LASTERA -= 1;
 
@@ -1373,7 +1373,7 @@ void komodo_args(char *argv0)
                 }
                 else
                 {
-                    LogPrintf("ASSETCHAINS_FOUNDERS_REWARD set to %ld\n", ASSETCHAINS_FOUNDERS_REWARD);
+                    LogPrintf("ASSETCHAINS_FOUNDERS_REWARD set to %" PRIu64 "\n", ASSETCHAINS_FOUNDERS_REWARD);
                 }
                 /*else if ( ASSETCHAINS_SELFIMPORT.size() == 0 )
                 {
@@ -1649,10 +1649,18 @@ void komodo_args(char *argv0)
             ASSETCHAINS_HALVING[0] *= 5;
             LogPrintf("PIRATE halving changed to %d %.1f days ASSETCHAINS_LASTERA.%llu\n",(int32_t)ASSETCHAINS_HALVING[0],(double)ASSETCHAINS_HALVING[0]/1440,(long long)ASSETCHAINS_LASTERA);
         }
-        else if ( ASSETCHAINS_PRIVATE != 0 )
+
+        // Chains for which the use of "-ac_private" is permitted.
+        const std::set<std::string> allowedPrivateOnly = {"PIRATE", "ZOMBIE"};
+
+        if (ASSETCHAINS_PRIVATE != 0 && allowedPrivateOnly.count(chainName.ToString()) == 0)
         {
-            LogPrintf("-ac_private for a non-PIRATE chain is not supported. The only reason to have an -ac_private chain is for total privacy and that is best achieved with the largest anon set. PIRATE has that and it is recommended to just use PIRATE\n");
+            LogPrintf("-ac_private for a non-PIRATE chain is not supported.\n"
+                      "The only reason to have an -ac_private chain is for total\n"
+                      "privacy and that is best achieved with the largest anon set.\n"
+                      "PIRATE has that and it is recommended to just use PIRATE\n");
             StartShutdown();
+            throw std::invalid_argument("-ac_private for a non-PIRATE chain is not supported.");
         }
         // Set cc enables for all existing ac_cc chains here. 
         if ( chainName.isSymbol("AXO") )

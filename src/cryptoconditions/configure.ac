@@ -8,6 +8,10 @@ AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_SUBDIRS([src/include/secp256k1])
 
 AM_INIT_AUTOMAKE([foreign subdir-objects])
+
+dnl make the compilation flags quiet unless V=1 is used
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
 LT_INIT
 
 # Checks for programs.

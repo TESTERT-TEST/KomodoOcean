@@ -1005,7 +1005,7 @@ DBErrors CWalletDB::LoadWallet(CWallet* pwallet)
                 reAdded++;
             }
         }
-        fprintf(stderr, "Cleared %li orphaned staking transactions from wallet. Readded %i real transactions.\n",deadTxns.size(),reAdded);
+        fprintf(stderr, "Cleared %zu orphaned staking transactions from wallet. Readded %" PRId32 " real transactions.\n", deadTxns.size(), reAdded);
         fNoncriticalErrors = false;
         deadTxns.clear();
     }
