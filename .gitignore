@@ -8,10 +8,6 @@ src/zcash-gtest
 src/zcash-tx
 src/test/test_bitcoin
 
-# Zcash utilities
-src/zcash/GenerateParams
-src/zcash/CreateJoinSplit
-
 *zcashTest.pk
 *zcashTest.vk
 
@@ -40,6 +36,7 @@ src/config/bitcoin-config.h
 src/config/bitcoin-config.h.in
 src/config/stamp-h1
 share/setup.nsi
+src/cryptoconditions/src/cryptoconditions-config.h.in
 
 cache/
 venv-mnf/
@@ -48,7 +45,7 @@ venv-mnf/
 .dirstamp
 .libs
 .*.swp
-*.*~*
+*~
 *.bak
 *.rej
 *.orig
@@ -134,5 +131,7 @@ src/komodod
 src/qt/komodo-qt
 
 # chain files for iguana
+src/qt/*_7776
+src/*_7776
 *_7776
-
+releases/
