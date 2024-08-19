@@ -1606,12 +1606,6 @@ void static BitcoinMiner()
                             bool found = EhOptimisedSolve(n, k, curr_state, validBlock, cancelled);
                             ehSolverRuns.increment();
                             if (found) {
-                                int32_t i; uint256 hash = pblock->GetHash();
-                                //for (i=0; i<32; i++)
-                                //    LogPrintf("%02x",((uint8_t *)&hash)[i]);
-                                //LogPrintf(" <- %s Block found %d\n",ASSETCHAINS_SYMBOL,Mining_height);
-                                //FOUND_BLOCK = 1;
-                                //KOMODO_MAYBEMINED = Mining_height;
                                 break;
                             }
                         } catch (EhSolverCancelledException&) {
