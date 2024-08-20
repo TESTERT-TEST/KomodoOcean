@@ -23,4 +23,4 @@ LDFLAGS="-Wl,-no_pie" \
 CXXFLAGS="-g0 -O2" \
 CONFIG_SITE="$PWD/depends/x86_64-apple-darwin/share/config.site" ./configure --disable-tests --disable-bench --with-gui=qt5 --disable-bip70
 # make app
-make V=1 -j$(nproc --all)
+make -j$(nproc --all) # V=1

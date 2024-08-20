@@ -580,7 +580,7 @@ bool GatewaysValidate(struct CCcontract_info *cp,Eval *eval,const CTransaction &
                             return eval->Invalid("invalid MofN in gatewaysbind");
                         else if (pubkeys.size()!=N)
                         {
-                            sprintf(validationError,"not enough pubkeys(%ld) for N.%d gatewaysbind ",pubkeys.size(),N);
+                            sprintf(validationError, "not enough pubkeys(%zu) for N.%" PRIu8 " gatewaysbind ", pubkeys.size(), N);
                             return eval->Invalid(validationError);
                         }
                         else if ( (fullsupply=CCfullsupply(tokenid)) != totalsupply )

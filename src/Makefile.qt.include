@@ -452,8 +452,8 @@ qt_komodo_qt_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
 endif
 
 if ENABLE_WALLET
-$(info $(red)[ Decker ]$(reset) ENABLE_WALLET)
-$(info $$EXTRA_LIBRARIES is [${EXTRA_LIBRARIES}])
+# $(info $(red)[ Decker ]$(reset) ENABLE_WALLET)
+# $(info $$EXTRA_LIBRARIES is [${EXTRA_LIBRARIES}])
 # LIBBITCOIN_CLI should be first?
 qt_komodo_qt_LDADD += libbitcoin_wallet.a 
 endif
@@ -485,16 +485,10 @@ qt_komodo_qt_LDADD += \
   $(CURL_LIBS)
 
 qt_komodo_qt_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
-
-if HAVE_OPENMP
-qt_komodo_qt_LDFLAGS += -fopenmp
-endif
-
 qt_komodo_qt_LIBTOOLFLAGS = --tag CXX
 
 qt_komodo_qt_LDADD += \
   $(LIBZCASH) \
-  $(LIBSNARK) \
   $(LIBZCASH_LIBS) \
   $(LIBCRYPTOCONDITIONS)
 
@@ -502,15 +496,15 @@ if TARGET_DARWIN
   qt_komodo_qt_LDADD += -lc++
 endif
 
-$(info $(red)[ Decker ]$(reset) Check the komodo-qt dependencies ...)
-#$(info $$qt_komodo_qt_CXXFLAGS is [${qt_komodo_qt_CXXFLAGS}])
-$(info $$qt_komodo_qt_CPPFLAGS is [${qt_komodo_qt_CPPFLAGS}])
-$(info $$qt_komodo_qt_LDADD is [${qt_komodo_qt_LDADD}])
-$(info $$qt_komodo_qt_LDFLAGS is [${qt_komodo_qt_LDFLAGS}])
-$(info $(red)[ Decker ]$(reset) Check the komodod dependencies ...)
-$(info $$komodod_CPPFLAGS is [${komodod_CPPFLAGS}])
-$(info $$komodod_LDADD is [${komodod_LDADD}])
-$(info $$komodod_LDFLAGS is [${komodod_LDFLAGS}])
+# $(info $(red)[ Decker ]$(reset) Check the komodo-qt dependencies ...)
+# #$(info $$qt_komodo_qt_CXXFLAGS is [${qt_komodo_qt_CXXFLAGS}])
+# $(info $$qt_komodo_qt_CPPFLAGS is [${qt_komodo_qt_CPPFLAGS}])
+# $(info $$qt_komodo_qt_LDADD is [${qt_komodo_qt_LDADD}])
+# $(info $$qt_komodo_qt_LDFLAGS is [${qt_komodo_qt_LDFLAGS}])
+# $(info $(red)[ Decker ]$(reset) Check the komodod dependencies ...)
+# $(info $$komodod_CPPFLAGS is [${komodod_CPPFLAGS}])
+# $(info $$komodod_LDADD is [${komodod_LDADD}])
+# $(info $$komodod_LDFLAGS is [${komodod_LDFLAGS}])
 
 # $(info $(red)$$QT_LIBS$(reset) is [${QT_LIBS}])
 # $(info $(red)$$QT_DBUS_LIBS$(reset) is [${QT_DBUS_LIBS}])

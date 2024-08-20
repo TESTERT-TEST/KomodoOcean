@@ -2,11 +2,10 @@ TEMPLATE = app
 TARGET = KomodoOceanGUI
 VERSION = 0.1.0.0
 
-INCLUDEPATH += src src\qt src\libsnark src\protobuf src\secp256k1 src\secp256k1\include src\leveldb\include src\leveldb\helpers\memenv src\leveldb src\univalue\include src\libevent\include src\libevent\compat src\cryptoconditions\include src\cryptoconditions src\cryptoconditions\src\asn
+INCLUDEPATH += src src\qt src\protobuf src\secp256k1 src\secp256k1\include src\leveldb\include src\leveldb\helpers\memenv src\leveldb src\univalue\include src\libevent\include src\libevent\compat src\cryptoconditions\include src\cryptoconditions src\cryptoconditions\src\asn
 
 MINIUPNPC_INCLUDE_PATH = src\miniupnpc
 
-windows:INCLUDEPATH += depends\libgmp_6.1.1_msvc14\include
 windows:INCLUDEPATH += depends\BDB_6.2.32\include depends\db-6.2.23\build_windows
 windows:INCLUDEPATH += depends\libsodium-1.0.15-msvc\include
 windows:INCLUDEPATH += depends\boost_1_65_1 depends\boost_1_65_1\boost
@@ -329,13 +328,6 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\libevent\signal.c \
     src\libevent\strlcpy.c \
     src\libevent\win32select.c \
-    src\libsnark\algebra\curves\alt_bn128\alt_bn128_g1.cpp \
-    src\libsnark\algebra\curves\alt_bn128\alt_bn128_g2.cpp \
-    src\libsnark\algebra\curves\alt_bn128\alt_bn128_init.cpp \
-    src\libsnark\algebra\curves\alt_bn128\alt_bn128_pairing.cpp \
-    src\libsnark\algebra\curves\alt_bn128\alt_bn128_pp.cpp \
-    src\libsnark\common\profiling.cpp \
-    src\libsnark\common\utils.cpp \
     src\main.cpp \
     src\merkleblock.cpp \
     src\metrics.cpp \
@@ -643,14 +635,12 @@ LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -l
 windows:LIBS += -lboost_chrono$$BOOST_LIB_SUFFIX
 LIBS += -lrustzcash
 
-Release:LIBS += -ldepends\libgmp_6.1.1_msvc14\lib\x64\gmp
 Release:LIBS += -ldepends\libsodium-1.0.15-msvc\x64\Release\v140\dynamic\libsodium
 Release:LIBS += -ldepends\libcurl-master\lib\dll-release-x64\libcurl
 Release:LIBS += -ldepends\db-6.2.23\build_windows\x64\Release\libdb62
 Release:LIBS += -llibcryptoMD -llibsslMD
 Release:LIBS += -ldepends\pthreads-master\dll\x64\Release\pthreads
 
-Debug:LIBS += -ldepends\libgmp_6.1.1_msvc14\lib\x64\gmp
 Debug:LIBS += -ldepends\libsodium-1.0.15-msvc\x64\Debug\v140\dynamic\libsodium
 Debug:LIBS += -ldepends\libcurl-master\lib\dll-debug-x64\libcurl_debug
 Debug:LIBS += -ldepends\db-6.2.23\build_windows\x64\Debug\libdb62d
