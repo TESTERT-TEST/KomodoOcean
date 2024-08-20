@@ -35,7 +35,7 @@
 #include <string>
 #ifdef _WIN32
 #include <io.h>
-#include <windows.h>
+#include <wincon.h>
 #else
 #include <sys/ioctl.h>
 #endif
@@ -366,7 +366,7 @@ int printMetrics(size_t cols, bool mining)
                         subsidy -= subsidy/5;
                     }
 
-                    if ((std::max( 0U, Params().CoinbaseMaturity() - (tipHeight - height)) > 0) ||
+                    if ((static_cast<int32_t>(Params().CoinbaseMaturity() - (tipHeight - height)) > 0) ||
                         (tipHeight < komodo_block_unlocktime(height) && subsidy >= ASSETCHAINS_TIMELOCKGTE)) {
                         immature += subsidy;
                     } else {
@@ -448,8 +448,6 @@ int printInitMessage()
 }
 
 #ifdef WIN32
-#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
-
 bool enableVTMode()
 {
     // Set output mode to handle virtual terminal sequences

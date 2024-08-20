@@ -111,6 +111,12 @@ cd komodo
 
 *p.s.* Currently only `x86_64` arch supported for MacOS, build for `Apple M1` processors unfortunately not yet supported.
 
+#### Docker
+
+:whale: [deckersu/komodoocean](https://hub.docker.com/r/deckersu/komodoocean) - This Docker image provides the official KomodoOcean daemon for the Komodo blockchain platform. Komodod is the core component responsible for running a Komodo node, facilitating transaction validation, block creation, and communication within the network.
+
+Read the description on [Docker Hub](https://hub.docker.com/r/deckersu/komodoocean) for usage examples.
+
 ## Create komodo.conf ##
 
 Before start the wallet you should [create config file](https://github.com/DeckerSU/KomodoOcean/wiki/F.A.Q.#q-after-i-start-komodo-qt-i-receive-the-following-error-error-cannot-parse-configuration-file-missing-komodoconf-only-use-keyvalue-syntax-what-should-i-do) `komodo.conf` at one of the following locations:
