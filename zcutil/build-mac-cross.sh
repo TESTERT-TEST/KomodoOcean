@@ -2,9 +2,9 @@
 
 # don't forget to place SDK into project folder before run this script
 mkdir -p ${PWD}/depends/SDKs
-tar -C ${PWD}/depends/SDKs -xf ${PWD}/Xcode-12.1-12A7403-extracted-SDK-with-libcxx-headers.tar.gz
+tar -C ${PWD}/depends/SDKs -xf ${PWD}/Xcode-13.2.1-13C100-extracted-SDK-with-libcxx-headers.tar.gz
 # make deps
-make -C ${PWD}/depends v=1 NO_PROTON=1 HOST=x86_64-apple-darwin DARWIN_SDK_PATH=${PWD}/depends/SDKs/Xcode-12.1-12A7403-extracted-SDK-with-libcxx-headers -j$(nproc --all)
+make -C ${PWD}/depends v=1 NO_PROTON=1 HOST=x86_64-apple-darwin -j$(nproc --all)
 
 # here we need bit modify config.site for darwin cross-compile case,
 # to fix env command path and paths to cctools (ar, ranlib, strip, nm, etc.),
