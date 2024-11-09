@@ -4,5 +4,5 @@ make -C ${PWD}/depends v=1 NO_PROTON=1 HOST=arm64-apple-darwin -j$(nproc --all)
 ./autogen.sh
 # -Wno-deprecated-builtins -Wno-enum-constexpr-conversion
 CXXFLAGS="-g0 -O2 -Wno-unknown-warning-option" \
-CONFIG_SITE="$PWD/depends/arm64-apple-darwin/share/config.site" ./configure --disable-tests --disable-bench --with-gui=qt5 --disable-bip70
+CONFIG_SITE="$PWD/depends/arm64-apple-darwin/share/config.site" ./configure --disable-tests --disable-bench --with-gui=qt5 --disable-bip70 --host=arm64-apple-darwin
 make -j$(nproc --all) # V=1
