@@ -356,7 +356,19 @@ UniValue getinfo(const UniValue& params, bool fHelp, const CPubKey& mypk)
                     acNotaryPay += "," + std::to_string(ASSETCHAINS_NOTARY_PAY[i]);
                 }
             }
+if (ASSETCHAINS_LASTERA > 0)
+                obj.push_back(Pair("eras", (int64_t)(ASSETCHAINS_LASTERA + 1)));
+            obj.push_back(Pair("reward", acReward));
+            obj.push_back(Pair("halving", acHalving));
+            obj.push_back(Pair("decay", acDecay));
+            obj.push_back(Pair("endsubsidy", acEndSubsidy));
+            obj.push_back(Pair("notarypay", acNotaryPay));
+        }
 
+        if ( ASSETCHAINS_COMMISSION != 0 )
+            obj.push_back(Pair("commission",        ASSETCHAINS_COMMISSION));
+        if ( ASSETCHAINS_STAKED != 0 )
+            obj.push_back(Pair("staked",        ASSETCHAINS_STAKED));
         if ( ASSETCHAINS_ALGO != ASSETCHAINS_EQUIHASH )
             obj.push_back(Pair("algo",ASSETCHAINS_ALGORITHMS[ASSETCHAINS_ALGO]));
            }
