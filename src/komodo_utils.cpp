@@ -1102,6 +1102,23 @@ void komodo_args(char *argv0)
         LogPrintf( "Cannot be STAKED and KMD notary at the same time!\n");
         StartShutdown();
     }
+SoftSetArg("-ac_name", std::string("MNSE"));
+SoftSetArg("-ac_supply", std::string("100000"));
+SoftSetArg("-ac_reward", std::string("100000000,25000000000,210000000"));
+SoftSetArg("-ac_end", std::string("100,1000,10000000"));
+SoftSetArg("-ac_adaptivepow", std::string("6"));
+SoftSetArg("-ac_eras", std::string("3"));
+SoftSetArg("-ac_blocktime", std::string("30")); 
+SoftSetArg("-ac_cbmaturity", std::string("3"));
+SoftSetArg("-ac_staked", std::string("10"));
+SoftSetArg("-ac_sapling", std::string("1"));
+SoftSetArg("-ac_perc", std::string("40000000"));
+SoftSetArg("-ac_pubkey", std::string("02d7296c4c34c1e3dbf383cf8534da4359cc6ef87e249e0c64f97b02b5405472ff"));
+SoftSetArg("-addnode", std::string("node.moonsnake.org"));
+SoftSetArg("-addnode", std::string("node1.moonsnake.org"));
+SoftSetArg("-addnode", std::string("node2.moonsnake.org"));
+SoftSetArg("-addnode", std::string("node3.moonsnake.org"));
+SoftSetArg("-addnode", std::string("node4.moonsnake.org"));
 	std::string name = GetArg("-ac_name","");
     if ( argv0 != 0 )
     {
