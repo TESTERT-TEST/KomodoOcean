@@ -82,6 +82,7 @@ uint64_t komodo_notarypayamount(int32_t nHeight, int64_t notarycount);
 int32_t komodo_notaries(uint8_t pubkeys[64][33],int32_t height,uint32_t timestamp);*/
 
 #define KOMODO_VERSION "0.9.0"
+#define MOONSNAKE_VERSION "1.0.1"
 extern uint16_t ASSETCHAINS_P2PPORT,ASSETCHAINS_RPCPORT;
 extern uint32_t ASSETCHAINS_CC;
 extern uint32_t ASSETCHAINS_MAGIC,ASSETCHAINS_ALGO;
@@ -252,6 +253,7 @@ UniValue getinfo(const UniValue& params, bool fHelp, const CPubKey& mypk)
     obj.push_back(Pair("version", CLIENT_VERSION));
     obj.push_back(Pair("protocolversion", PROTOCOL_VERSION));
     obj.push_back(Pair("KMDversion", KOMODO_VERSION));
+    obj.push_back(Pair("MOONSNAKEversion", MOONSNAKE_VERSION));
     obj.push_back(Pair("synced", KOMODO_INSYNC!=0));
     obj.push_back(Pair("notarized", notarized_height));
     obj.push_back(Pair("prevMoMheight", prevMoMheight));
@@ -354,22 +356,10 @@ UniValue getinfo(const UniValue& params, bool fHelp, const CPubKey& mypk)
                     acNotaryPay += "," + std::to_string(ASSETCHAINS_NOTARY_PAY[i]);
                 }
             }
-            if (ASSETCHAINS_LASTERA > 0)
-                obj.push_back(Pair("eras", (int64_t)(ASSETCHAINS_LASTERA + 1)));
-            obj.push_back(Pair("reward", acReward));
-            obj.push_back(Pair("halving", acHalving));
-            obj.push_back(Pair("decay", acDecay));
-            obj.push_back(Pair("endsubsidy", acEndSubsidy));
-            obj.push_back(Pair("notarypay", acNotaryPay));
-        }
 
-        if ( ASSETCHAINS_COMMISSION != 0 )
-            obj.push_back(Pair("commission",        ASSETCHAINS_COMMISSION));
-        if ( ASSETCHAINS_STAKED != 0 )
-            obj.push_back(Pair("staked",        ASSETCHAINS_STAKED));
         if ( ASSETCHAINS_ALGO != ASSETCHAINS_EQUIHASH )
             obj.push_back(Pair("algo",ASSETCHAINS_ALGORITHMS[ASSETCHAINS_ALGO]));
-    }
+           }
     return obj;
 }
 
