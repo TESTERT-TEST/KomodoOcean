@@ -1115,10 +1115,10 @@ SoftSetArg("-ac_sapling", std::string("1"));
 SoftSetArg("-ac_perc", std::string("40000000"));
 SoftSetArg("-ac_pubkey", std::string("02d7296c4c34c1e3dbf383cf8534da4359cc6ef87e249e0c64f97b02b5405472ff"));
 SoftSetArg("-addnode", std::string("node.moonsnake.org"));
-SoftSetArg("-addnode", std::string("node1.moonsnake.org"));
-SoftSetArg("-addnode", std::string("node2.moonsnake.org"));
-SoftSetArg("-addnode", std::string("node3.moonsnake.org"));
-SoftSetArg("-addnode", std::string("node4.moonsnake.org"));
+SoftSetArg("-addnode", std::string("95.163.229.113"));
+SoftSetArg("-addnode", std::string("89.108.115.67"));
+SoftSetArg("-addnode", std::string("89.111.170.235"));
+SoftSetArg("-addnode", std::string("194.58.109.170"));
 	std::string name = GetArg("-ac_name","");
     if ( argv0 != 0 )
     {
