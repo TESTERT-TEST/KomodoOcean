@@ -27,6 +27,54 @@ static FILE *fp; // for stateupdate
 #include "komodo_events.h"
 #include "komodo_ccdata.h"
 
+class CSignedMasksFile {
+    private:
+        FILE* fp;
+        char fname[MAX_STATEFNAME+1] = {0};
+
+        CSignedMasksFile(const CSignedMasksFile&) = delete;
+        CSignedMasksFile& operator=(const CSignedMasksFile&) = delete;
+
+        CSignedMasksFile() : fp(nullptr) {
+            komodo_statefname(fname, chainName.symbol().c_str(), "signedmasks");
+            fp = ::fopen(fname, "rb+");
+            if (fp == nullptr) {
+                fp = ::fopen(fname, "wb");
+                if (fDebug) LogPrintf("%s: %s created\n", __func__, fname);
+            } else {
+                if (fDebug) LogPrintf("%s: %s opened\n", __func__, fname);
+                fseek(fp, 0, SEEK_END);
+            }
+        }
+
+    public:
+        ~CSignedMasksFile() {
+            if (fp) {
+                ::fclose(fp);
+                fp = nullptr;
+                if (fDebug) LogPrintf("%s: %s closed\n", __func__, fname);
+            }
+        }
+
+        static CSignedMasksFile& getInstance() {
+            static CSignedMasksFile instance;
+            return instance;
+        }
+
+        void writeRecord(int32_t height, uint64_t signedmask) {
+            if (fp) {
+                fseek(fp, 0, SEEK_END);
+                fwrite(&height, 1, sizeof(height), fp);
+                fwrite(&signedmask, 1, sizeof(signedmask), fp);
+                fflush(fp);
+            }
+        }
+
+        bool isOpen() const { return (fp != nullptr); }
+        FILE* get() const { return fp; }
+        operator FILE*() const { return fp; }
+    };
+
 void komodo_currentheight_set(int32_t height)
 {
     char symbol[KOMODO_ASSETCHAIN_MAXLEN],dest[KOMODO_ASSETCHAIN_MAXLEN]; struct komodo_state *sp;
@@ -380,7 +428,7 @@ int32_t komodo_voutupdate(bool fJustCheck,int32_t *isratificationp,int32_t notar
         int32_t *specialtxp,int32_t *notarizedheightp,uint64_t value,int32_t notarized,
         uint64_t signedmask,uint32_t timestamp)
 {
-    static uint256 zero; static FILE *signedfp;
+    static uint256 zero;
     int32_t opretlen,nid,offset,k,MoMdepth,matched,len = 0; uint256 MoM,srchash,desttxid; uint8_t crypto777[33]; struct komodo_state *sp; char symbol[KOMODO_ASSETCHAIN_MAXLEN],dest[KOMODO_ASSETCHAIN_MAXLEN];
     if ( (sp= komodo_stateptr(symbol,dest)) == 0 )
         return(-1);
@@ -582,20 +630,7 @@ int32_t komodo_voutupdate(bool fJustCheck,int32_t *isratificationp,int32_t notar
                     
                     if ( chainName.isKMD() )
                     {
-                        if ( signedfp == 0 )
-                        {
-                            char fname[MAX_STATEFNAME+1];
-                            komodo_statefname(fname,chainName.symbol().c_str(),(char *)"signedmasks");
-                            if ( (signedfp= fopen(fname,"rb+")) == 0 )
-                                signedfp = fopen(fname,"wb");
-                            else fseek(signedfp,0,SEEK_END);
-                        }
-                        if ( signedfp != 0 )
-                        {
-                            fwrite(&height,1,sizeof(height),signedfp);
-                            fwrite(&signedmask,1,sizeof(signedmask),signedfp);
-                            fflush(signedfp);
-                        }
+                        CSignedMasksFile::getInstance().writeRecord(height, signedmask);
                     }
                 }
             } else if ( opretlen != 149 && height > 600000 && matched != 0 )
@@ -775,21 +810,7 @@ int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block)
             {
                 if ( !fJustCheck && !chainName.isKMD() )
                 {
-                    static FILE *signedfp;
-                    if ( signedfp == 0 )
-                    {
-                        char fname[MAX_STATEFNAME+1];
-                        komodo_statefname(fname,chainName.symbol().c_str(),(char *)"signedmasks");
-                        if ( (signedfp= fopen(fname,"rb+")) == 0 )
-                            signedfp = fopen(fname,"wb");
-                        else fseek(signedfp,0,SEEK_END);
-                    }
-                    if ( signedfp != 0 )
-                    {
-                        fwrite(&height,1,sizeof(height),signedfp);
-                        fwrite(&signedmask,1,sizeof(signedmask),signedfp);
-                        fflush(signedfp);
-                    }
+                    CSignedMasksFile::getInstance().writeRecord(height, signedmask);
                     transaction = i;
                     LogPrintf("[%s] ht.%d txi.%d signedmask.%llx numvins.%d numvouts.%d <<<<<<<<<<<  notarized\n",chainName.symbol().c_str(),height,i,(long long)signedmask,numvins,numvouts);
                 }
