@@ -54,5 +54,3 @@ int32_t komodo_voutupdate(bool fJustCheck,int32_t *isratificationp,int32_t notar
 
 int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block);
 
-void RecreateSignedMasksFile();
-std::string GetSignedMasksFileName();

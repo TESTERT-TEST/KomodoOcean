@@ -27,68 +27,6 @@ static FILE *fp; // for stateupdate
 #include "komodo_events.h"
 #include "komodo_ccdata.h"
 
-class CSignedMasksFile {
-    private:
-        FILE* fp;
-        std::string fname;
-        CSignedMasksFile(const CSignedMasksFile&) = delete;
-        CSignedMasksFile& operator=(const CSignedMasksFile&) = delete;
-
-        CSignedMasksFile() : fp(nullptr), fname((GetDataDir() / "signedmasks").string()) {
-
-            fp = ::fopen(fname.c_str(), "rb+");
-            if (fp == nullptr) {
-                fp = ::fopen(fname.c_str(), "wb");
-                if (fDebug && fp) LogPrintf("%s: %s created\n", __func__, fname);
-            } else {
-                if (fDebug) LogPrintf("%s: %s opened\n", __func__, fname);
-                fseek(fp, 0, SEEK_END);
-            }
-        }
-
-    public:
-        ~CSignedMasksFile() {
-            if (fp) {
-                ::fclose(fp);
-                fp = nullptr;
-                if (fDebug) LogPrintf("%s: %s closed\n", __func__, fname);
-            }
-        }
-
-        static CSignedMasksFile& getInstance() {
-            static CSignedMasksFile instance;
-            return instance;
-        }
-
-        void writeRecord(int32_t height, uint64_t signedmask) {
-            if (fp) {
-                fseek(fp, 0, SEEK_END);
-                fwrite(&height, 1, sizeof(height), fp);
-                fwrite(&signedmask, 1, sizeof(signedmask), fp);
-                fflush(fp);
-            }
-        }
-
-        bool isOpen() const { return (fp != nullptr); }
-        FILE* get() const { return fp; }
-        operator FILE*() const { return fp; }
-        std::string getFileName() const { return fname; }
-        void ReCreate() {
-            if (fp) {
-                ::fclose(fp);
-                fp = nullptr;
-            }
-            ::remove(fname.c_str());
-            /* for use unit tests, in unit tests it can be removed in between */
-            fs::path p(fname); fs::path dir = p.parent_path();
-            if (!dir.empty() && !fs::exists(dir)) { fs::create_directories(dir); }
-            fp = ::fopen(fname.c_str(), "wb");
-        }
-    };
-
-void RecreateSignedMasksFile() { CSignedMasksFile::getInstance().ReCreate(); }
-std::string GetSignedMasksFileName() { return CSignedMasksFile::getInstance().getFileName(); }
-
 void komodo_currentheight_set(int32_t height)
 {
     char symbol[KOMODO_ASSETCHAIN_MAXLEN],dest[KOMODO_ASSETCHAIN_MAXLEN]; struct komodo_state *sp;
@@ -642,10 +580,7 @@ int32_t komodo_voutupdate(bool fJustCheck,int32_t *isratificationp,int32_t notar
                             chainName.isKMD()?"BTC":"KMD",desttxid.ToString().c_str(),
                             opretlen,len,sp->LastNotarizedMoM().ToString().c_str(),sp->LastNotarizedMoMDepth());
                     
-                    if ( chainName.isKMD() )
-                    {
-                        CSignedMasksFile::getInstance().writeRecord(height, signedmask);
-                    }
+                    // if ( chainName.isKMD() ) {} // write (height, signedmask) to signedmasks
                 }
             } else if ( opretlen != 149 && height > 600000 && matched != 0 )
                 LogPrintf("%s validated.%d notarized.%d %llx reject ht.%d NOTARIZED.%d prev.%d %s.%s DESTTXID.%s len.%d opretlen.%d\n",
@@ -824,7 +759,7 @@ int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block)
             {
                 if ( !fJustCheck && !chainName.isKMD() )
                 {
-                    CSignedMasksFile::getInstance().writeRecord(height, signedmask);
+                    // write (height, signedmask) to signedmasks
                     transaction = i;
                     LogPrintf("[%s] ht.%d txi.%d signedmask.%llx numvins.%d numvouts.%d <<<<<<<<<<<  notarized\n",chainName.symbol().c_str(),height,i,(long long)signedmask,numvins,numvouts);
                 }
