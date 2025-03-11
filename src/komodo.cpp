@@ -30,17 +30,16 @@ static FILE *fp; // for stateupdate
 class CSignedMasksFile {
     private:
         FILE* fp;
-        char fname[MAX_STATEFNAME+1] = {0};
-
+        std::string fname;
         CSignedMasksFile(const CSignedMasksFile&) = delete;
         CSignedMasksFile& operator=(const CSignedMasksFile&) = delete;
 
-        CSignedMasksFile() : fp(nullptr) {
-            komodo_statefname(fname, chainName.symbol().c_str(), "signedmasks");
-            fp = ::fopen(fname, "rb+");
+        CSignedMasksFile() : fp(nullptr), fname((GetDataDir() / "signedmasks").string()) {
+
+            fp = ::fopen(fname.c_str(), "rb+");
             if (fp == nullptr) {
-                fp = ::fopen(fname, "wb");
-                if (fDebug) LogPrintf("%s: %s created\n", __func__, fname);
+                fp = ::fopen(fname.c_str(), "wb");
+                if (fDebug && fp) LogPrintf("%s: %s created\n", __func__, fname);
             } else {
                 if (fDebug) LogPrintf("%s: %s opened\n", __func__, fname);
                 fseek(fp, 0, SEEK_END);
@@ -73,7 +72,22 @@ class CSignedMasksFile {
         bool isOpen() const { return (fp != nullptr); }
         FILE* get() const { return fp; }
         operator FILE*() const { return fp; }
+        std::string getFileName() const { return fname; }
+        void ReCreate() {
+            if (fp) {
+                ::fclose(fp);
+                fp = nullptr;
+            }
+            ::remove(fname.c_str());
+            /* for use unit tests, in unit tests it can be removed in between */
+            fs::path p(fname); fs::path dir = p.parent_path();
+            if (!dir.empty() && !fs::exists(dir)) { fs::create_directories(dir); }
+            fp = ::fopen(fname.c_str(), "wb");
+        }
     };
+
+void RecreateSignedMasksFile() { CSignedMasksFile::getInstance().ReCreate(); }
+std::string GetSignedMasksFileName() { return CSignedMasksFile::getInstance().getFileName(); }
 
 void komodo_currentheight_set(int32_t height)
 {

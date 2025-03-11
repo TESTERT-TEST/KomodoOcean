@@ -510,6 +510,7 @@ namespace LegacyEventsTests {
 
         /* Test for MARTY -> KMD in MARTY chain (MARTY is AC) */
 
+        RecreateSignedMasksFile();
         ASSERT_TRUE(mempool.mapTx.size() == 0); // be sure that mempool is empty at the begin of test
 
         chainName = assetchain("MARTY");
@@ -590,7 +591,7 @@ namespace LegacyEventsTests {
         ASSERT_TRUE(state_ptr->events.size() == 2);
 
         // (1) Check signedmasks
-        fs::path fileSignedMasksPath = GetDataDir(false) / "signedmasks";
+        fs::path fileSignedMasksPath = GetSignedMasksFileName();
         uintmax_t signedMasksFileSize = 0;
         if (fs::exists(fileSignedMasksPath) && fs::is_regular_file(fileSignedMasksPath)) {
             signedMasksFileSize = fs::file_size(fileSignedMasksPath);
