@@ -579,7 +579,7 @@ public:
     CAmount GetTransparentValueIn(int32_t nHeight,int64_t &interestp,const CTransaction& tx) const;
 
     //! Check whether all prevouts of the transaction are present in the UTXO set represented by this view
-    bool HaveInputs(const CTransaction& tx) const;
+    bool HaveInputs(const CTransaction& tx, std::string* errMsg = nullptr) const;
 
     //! Check whether all joinsplit requirements (anchors/nullifiers) are satisfied
     bool HaveJoinSplitRequirements(const CTransaction& tx) const;

@@ -1935,13 +1935,15 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
                     {
                         if (pfMissingInputs)
                             *pfMissingInputs = true;
-                        return false; // fMissingInputs and !state.IsInvalid() is used to detect this condition, don't set state.Invalid()
+                        return state.Error(strprintf("bad-txns-inputs-missing (%s:%d)", txin.prevout.hash.ToString(), txin.prevout.n));
+                        // return false; // fMissingInputs and !state.IsInvalid() is used to detect this condition, don't set state.Invalid()
                     }
                 }
                 // are the actual inputs available?
-                if (!view.HaveInputs(tx))
+                std::string errorMsg;
+                if (!view.HaveInputs(tx, &errorMsg))
                 {
-                    return state.Invalid(error("AcceptToMemoryPool: inputs already spent"),REJECT_DUPLICATE, "bad-txns-inputs-spent");
+                    return state.Invalid(error("AcceptToMemoryPool: inputs already spent"),REJECT_DUPLICATE, "bad-txns-inputs-spent (" + errorMsg +")");
                 }
             }
             

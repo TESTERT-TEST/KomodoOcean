@@ -672,14 +672,16 @@ bool CCoinsViewCache::HaveJoinSplitRequirements(const CTransaction& tx) const
     return true;
 }
 
-bool CCoinsViewCache::HaveInputs(const CTransaction& tx) const
+bool CCoinsViewCache::HaveInputs(const CTransaction& tx, std::string* errMsg) const
 {
     if (!tx.IsMint()) {
         for (unsigned int i = 0; i < tx.vin.size(); i++) {
             const COutPoint &prevout = tx.vin[i].prevout;
             const CCoins* coins = AccessCoins(prevout.hash);
             if (!coins || !coins->IsAvailable(prevout.n)) {
-                //LogPrintf("HaveInputs missing input %s/v%d\n",prevout.hash.ToString().c_str(),prevout.n);
+                if (errMsg) {
+                    *errMsg = strprintf("%s:%d", prevout.hash.ToString(), prevout.n);
+                }
                 return false;
             }
         }
