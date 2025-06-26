@@ -34,6 +34,7 @@ public:
         MAIN,
         TESTNET,
         REGTEST,
+        SIMNET,
 
         MAX_NETWORK_TYPES
     };

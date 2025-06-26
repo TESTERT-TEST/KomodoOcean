@@ -66,6 +66,20 @@ public:
 static CBaseRegTestParams regTestParams;
 
 /*
+ * Simulation network
+ */
+class CBaseSimNetParams : public CBaseChainParams
+{
+public:
+    CBaseSimNetParams()
+    {
+        nRPCPort = 18556;
+        strDataDir = "simnet";
+    }
+};
+static CBaseSimNetParams simNetParams;
+
+/*
  * Unit test
  */
 class CBaseUnitTestParams : public CBaseMainParams
@@ -100,6 +114,9 @@ void SelectBaseParams(CBaseChainParams::Network network)
     case CBaseChainParams::REGTEST:
         pCurrentBaseParams = &regTestParams;
         break;
+    case CBaseChainParams::SIMNET:
+        pCurrentBaseParams = &simNetParams;
+        break;
     default:
         assert(false && "Unimplemented network");
         return;
@@ -110,13 +127,19 @@ CBaseChainParams::Network NetworkIdFromCommandLine()
 {
     bool fRegTest = GetBoolArg("-regtest", false);
     bool fTestNet = GetBoolArg("-testnet", false);
+    bool fSimNet  = GetBoolArg("-simnet",  false);
 
-    if (fTestNet && fRegTest)
+    // // No more than one 'true': if the sum > 1, that’s an error
+    int nModes = int(fRegTest) + int(fTestNet) + int(fSimNet);
+    if (nModes > 1) {
         return CBaseChainParams::MAX_NETWORK_TYPES;
+    }
     if (fRegTest)
         return CBaseChainParams::REGTEST;
     if (fTestNet)
         return CBaseChainParams::TESTNET;
+    if (fSimNet)
+        return CBaseChainParams::SIMNET;
     return CBaseChainParams::MAIN;
 }
 
