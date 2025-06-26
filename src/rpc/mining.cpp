@@ -353,6 +353,9 @@ UniValue generate(const UniValue& params, bool fHelp, const CPubKey& mypk)
             IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
         }
 
+        if ( Params().NetworkIDString() == "simnet" ) {
+            assert(CalcPoW(pblock)); // real equihash solution calculation only for simnet
+        }
 
         CValidationState state;
         if (!ProcessNewBlock(1,chainActive.Tip()->nHeight+1,state, NULL, pblock, true, NULL))
