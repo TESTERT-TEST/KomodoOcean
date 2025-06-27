@@ -72,7 +72,7 @@ static int AppInitRawTx(int argc, char* argv[])
 
     // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
     if (!SelectParamsFromCommandLine()) {
-        fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
+        fprintf(stderr, "Error: Invalid combination of -regtest, -testnet, and -simnet.\n");
         return false;
     }
 
@@ -96,6 +96,7 @@ static int AppInitRawTx(int argc, char* argv[])
         strUsage += HelpMessageOpt("-txid", _("Output only the hex-encoded transaction id of the resultant transaction."));
         strUsage += HelpMessageOpt("-regtest", _("Enter regression test mode, which uses a special chain in which blocks can be solved instantly."));
         strUsage += HelpMessageOpt("-testnet", _("Use the test network"));
+        strUsage += HelpMessageOpt("-simnet", _("Use the simulation network mode"));
 
         fprintf(stdout, "%s", strUsage.c_str());
 

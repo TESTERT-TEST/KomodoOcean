@@ -697,9 +697,9 @@ int main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
 
-        // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
+        // Check for -testnet, -regtest, -simnet parameter (Params() calls are only valid after this clause)
         if (!SelectParamsFromCommandLine()) {
-            LogPrintf("Error: Invalid combination of -regtest and -testnet.\n");
+            LogPrintf("Error: Invalid combination of -regtest, -testnet, and -simnet.\n");
             return EXIT_FAILURE;
         }
 
@@ -746,7 +746,7 @@ int main(int argc, char *argv[])
     // - QSettings() will use the new application name after this, resulting in network-specific settings
     // - Needs to be done before createOptionsModel
 
-    // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
+    // Check for -testnet, -regtest, -simnet parameter (Params() calls are only valid after this clause)
     try {
 //        SelectParams(ChainNameFromCommandLine());
         SelectParams(NetworkIdFromCommandLine());

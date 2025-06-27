@@ -69,7 +69,7 @@ const CBaseChainParams& BaseParams();
 void SelectBaseParams(CBaseChainParams::Network network);
 
 /**
- * Looks for -regtest or -testnet and returns the appropriate Network ID.
+ * Looks for -regtest, -testnet, -simnet and returns the appropriate Network ID.
  * @returns Network ID or MAX_NETWORK_TYPES if an invalid combination is given
  */
 CBaseChainParams::Network NetworkIdFromCommandLine();

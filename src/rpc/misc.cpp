@@ -801,14 +801,14 @@ UniValue setmocktime(const UniValue& params, bool fHelp, const CPubKey& mypk)
     if (fHelp || params.size() != 1)
         throw runtime_error(
             "setmocktime timestamp\n"
-            "\nSet the local time to given timestamp (-regtest only)\n"
+            "\nSet the local time to given timestamp (-regtest and -simnet only)\n"
             "\nArguments:\n"
             "1. timestamp  (integer, required) Unix seconds-since-epoch timestamp\n"
             "   Pass 0 to go back to using the system time."
         );
 
     if (!Params().MineBlocksOnDemand())
-        throw runtime_error("setmocktime for regression testing (-regtest mode) only");
+        throw runtime_error("setmocktime for regression testing (-regtest and -simnet mode) only");
 
     // cs_vNodes is locked and node send/receive times are updated
     // atomically with the time change to prevent peers from being

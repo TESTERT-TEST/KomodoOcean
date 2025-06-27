@@ -53,6 +53,8 @@ std::string HelpMessageCli()
     strUsage += HelpMessageOpt("-testnet", _("Use the test network"));
     strUsage += HelpMessageOpt("-regtest", _("Enter regression test mode, which uses a special chain in which blocks can be "
                                              "solved instantly. This is intended for regression testing tools and app development."));
+    strUsage += HelpMessageOpt("-simnet", _("Enter simulation network mode, which uses a dedicated simulation chain for testing and development. "
+                                            "Blocks can be mined instantly."));
     strUsage += HelpMessageOpt("-rpcconnect=<ip>", strprintf(_("Send commands to node running on <ip> (default: %s)"), "127.0.0.1"));
     strUsage += HelpMessageOpt("-rpcport=<port>", strprintf(_("Connect to JSON-RPC on <port> (default: %u or testnet: %u)"), 8232, 18232));
     strUsage += HelpMessageOpt("-rpcwait", _("Wait for RPC server to start"));
@@ -133,7 +135,7 @@ static int AppInitRPC(int argc, char* argv[])
     }
     // Check for -testnet or -regtest parameter (BaseParams() calls are only valid after this clause)
     if (!SelectBaseParamsFromCommandLine()) {
-        fprintf(stderr, "Error: Invalid combination of -regtest and -testnet.\n");
+        fprintf(stderr, "Error: Invalid combination of -regtest, -testnet, and -simnet.\n");
         return EXIT_FAILURE;
     }
     if (GetBoolArg("-rpcssl", false))
