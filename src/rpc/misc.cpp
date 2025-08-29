@@ -1615,6 +1615,124 @@ UniValue decodeccopret(const UniValue& params, bool fHelp, const CPubKey& mypk)
     return result;
 }
 
+// --- BEGIN getkmdprices ---
+static size_t _rpc_prices_WriteCB(void* ptr, size_t size, size_t nmemb, void* userdata) {
+    std::string* s = static_cast<std::string*>(userdata);
+    s->append(static_cast<char*>(ptr), size * nmemb);
+    return size * nmemb;
+}
+
+static bool http_get_to_string(const std::string& url, const std::vector<std::string>& headers, std::string& out, long timeoutMs = 8000) {
+    CURL* curl = curl_easy_init();
+    if (!curl) return false;
+
+    struct curl_slist* chunk = nullptr;
+    for (const auto& h : headers) chunk = curl_slist_append(chunk, h.c_str());
+
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _rpc_prices_WriteCB);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &out);
+
+    // In our build configuration libcurl is compiled WITHOUT certificate support.
+    // That means curl cannot actually validate TLS certificates or hostnames.
+    // If we tried to set CURLOPT_SSL_VERIFYPEER=1 and CURLOPT_SSL_VERIFYHOST=2,
+    // libcurl would just fail the request (because it has no CA bundle / SSL backend).
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
+    curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, timeoutMs);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT_MS, 4000L);
+
+    CURLcode res = curl_easy_perform(curl);
+    long http_code = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+
+    if (chunk) curl_slist_free_all(chunk);
+    curl_easy_cleanup(curl);
+
+    return (res == CURLE_OK && http_code >= 200 && http_code < 300);
+}
+
+UniValue getkmdprices(const UniValue& params, bool fHelp, const CPubKey& mypk) {
+    if (fHelp || params.size() != 0) {
+        throw runtime_error(
+            "getkmdprices\n"
+            "Return KMD price in USD from CoinGecko and KuCoin.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getkmdprices", "")
+            + HelpExampleRpc("getkmdprices", "")
+        );
+    }
+
+    // ---------- CoinGecko ----------
+    CAmount cg_price = 0;
+    {
+        const std::string url = "https://api.coingecko.com/api/v3/simple/price?ids=komodo&vs_currencies=usd";
+        std::string body;
+        if (http_get_to_string(url, {"Accept: application/json"}, body)) {
+            UniValue j(UniValue::VOBJ);
+            if (j.read(body)) {
+                const UniValue& komodo = find_value(j, "komodo");
+                if (komodo.isObject()) {
+                    const UniValue& usd = find_value(komodo, "usd");
+                    if (!usd.isNull()) {
+                        try {
+                            cg_price = AmountFromValue(usd);
+                        } catch (const std::exception&) { }
+                    }
+                }
+            }
+        }
+    }
+
+    // ---------- KuCoin ----------
+    CAmount ku_price = 0;
+    int64_t ku_ts = 0;
+    {
+        const std::string url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=KMD-USDT";
+        std::string body;
+        if (http_get_to_string(url, {"Accept: application/json"}, body)) {
+            UniValue j(UniValue::VOBJ);
+            if (j.read(body)) {
+                const UniValue& code = find_value(j, "code");
+                if (code.isStr() && code.get_str() == "200000") {
+                    const UniValue& data = find_value(j, "data");
+                    const UniValue& pr   = find_value(data, "price");
+                    const UniValue& tms  = find_value(data, "time");
+                    if (!pr.isNull()) {
+                        try {
+                            ku_price = AmountFromValue(pr);
+                        } catch (const std::exception&) { }
+                    }
+                    if (tms.isNum()) ku_ts = tms.get_int64() / 1000; // ms -> s
+                }
+            }
+        }
+    }
+
+    // ---------- Result ----------
+    UniValue ret(UniValue::VOBJ);
+    ret.push_back(Pair("symbol", "KMD"));
+
+    UniValue cg(UniValue::VOBJ);
+    if (cg_price > 0) cg.push_back(Pair("price", ValueFromAmount(cg_price)));
+    else              cg.push_back(Pair("price", NullUniValue));
+    cg.push_back(Pair("source", "CoinGecko"));
+    ret.push_back(Pair("coingecko", cg));
+
+    UniValue ku(UniValue::VOBJ);
+    if (ku_price > 0) ku.push_back(Pair("price", ValueFromAmount(ku_price)));
+    else              ku.push_back(Pair("price", NullUniValue));
+    ku.push_back(Pair("source", "KuCoin"));
+    if (ku_ts > 0) ku.push_back(Pair("ts", ku_ts));
+    ret.push_back(Pair("kucoin", ku));
+
+    return ret;
+}
+// --- END getkmdprices ---
+
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         okSafeMode
   //  --------------------- ------------------------  -----------------------  ----------
@@ -1623,6 +1741,8 @@ static const CRPCCommand commands[] =
     { "util",               "z_validateaddress",      &z_validateaddress,      true  }, /* uses wallet if enabled */
     { "util",               "createmultisig",         &createmultisig,         true  },
     { "util",               "verifymessage",          &verifymessage,          true  },
+    { "util",               "getkmdprices",           &getkmdprices,           true  },
+
 
     /* Not shown in help */
     { "hidden",             "setmocktime",            &setmocktime,            true  },
