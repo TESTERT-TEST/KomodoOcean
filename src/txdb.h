@@ -91,6 +91,11 @@ public:
                     CNullifiersMap &mapSproutNullifiers,
                     CNullifiersMap &mapSaplingNullifiers);
     bool GetStats(CCoinsStats &stats) const;
+    /** 
+     * Create a new const database iterator. 
+     * Note: LevelDB does not provide a true const iterator, so this uses const_cast internally. 
+     */
+    std::unique_ptr<CDBIterator> NewDBConstIterator() const;
 };
 
 /** 

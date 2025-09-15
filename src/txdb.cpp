@@ -960,3 +960,11 @@ bool CBlockTreeDB::LoadBlockIndexGutsFast()
 
     return true;
 }
+
+std::unique_ptr<CDBIterator> CCoinsViewDB::NewDBConstIterator() const
+{
+    // LevelDB does not support const iterators.
+    // We need to use const_cast to bypass this limitation,
+    // but the returned iterator should only be used for read-only operations.
+    return std::unique_ptr<CDBIterator>(const_cast<CDBWrapper*>(&db)->NewIterator());
+}

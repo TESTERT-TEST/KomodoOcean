@@ -40,6 +40,8 @@
 #include <boost/unordered_map.hpp>
 #include "zcash/IncrementalMerkleTree.hpp"
 
+#include "dbwrapper.h"
+
 /** 
  * Pruned version of CTransaction: only retains metadata and unspent transaction outputs
  *
@@ -409,8 +411,10 @@ public:
 
     //! As we use CCoinsViews polymorphically, have a virtual destructor
     virtual ~CCoinsView() {}
-};
 
+    /** Create a const database iterator, or nullptr if this view has no DB backend. */
+    virtual std::unique_ptr<CDBIterator> NewDBConstIterator() const { return nullptr; }
+};
 
 /** CCoinsView backed by another CCoinsView */
 class CCoinsViewBacked : public CCoinsView
@@ -437,6 +441,10 @@ public:
                     CNullifiersMap &mapSproutNullifiers,
                     CNullifiersMap &mapSaplingNullifiers);
     bool GetStats(CCoinsStats &stats) const;
+    std::unique_ptr<CDBIterator> NewDBConstIterator() const override {
+        // Forward to the underlying view if available.
+        return base ? base->NewDBConstIterator() : nullptr;
+    }
 };
 
 
@@ -592,6 +600,11 @@ public:
     static const CScript &GetSpendFor(const CCoins *coins, const CTxIn& input);
 
     friend class CCoinsModifier;
+
+    std::unique_ptr<CDBIterator> NewDBConstIterator() const override {
+        // Cache has no DB; forward to base.
+        return CCoinsViewBacked::NewDBConstIterator();
+    }
 
 private:
     CCoinsMap::iterator FetchCoins(const uint256 &txid);
