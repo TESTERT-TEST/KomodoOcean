@@ -537,6 +537,10 @@ if ENABLE_WALLET
 komodod_LDADD += $(LIBBITCOIN_WALLET)
 endif
 
+if USE_SQLITE
+komodod_LDADD += $(SQLITE_LIBS)
+endif
+
 komodod_LDADD += \
   $(LIBCJSON) \
   $(BOOST_LIBS) \

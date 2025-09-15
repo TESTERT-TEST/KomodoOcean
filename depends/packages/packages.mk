@@ -84,6 +84,7 @@ rust_packages := rust $(rust_crates) librustzcash
 native_packages := native_ccache
 
 wallet_packages=bdb
+sqlite_packages=sqlite
 
 packages := boost openssl libevent zeromq $(zcash_packages) googletest libcurl # googlemock
 

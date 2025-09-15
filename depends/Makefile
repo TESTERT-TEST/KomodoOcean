@@ -4,6 +4,7 @@ SOURCES_PATH ?= $(BASEDIR)/sources
 BASE_CACHE ?= $(BASEDIR)/built
 SDK_PATH ?= $(BASEDIR)/SDKs
 NO_QT ?=
+NO_SQLITE ?=
 NO_WALLET ?=
 NO_UPNP ?=
 FALLBACK_DOWNLOAD_PATH ?= https://download.decker.im/depends-sources
@@ -76,10 +77,12 @@ include packages/packages.mk
 
 qt_packages_$(NO_QT) = $(qt_packages) $(qt_$(host_os)_packages) $(qt_$(host_arch)_$(host_os)_packages)
 rust_packages_$(NO_RUST) = $(rust_packages)
+sqlite_packages_$(NO_SQLITE) = $(sqlite_packages)
 wallet_packages_$(NO_WALLET) = $(wallet_packages)
 upnp_packages_$(NO_UPNP) = $(upnp_packages)
 
 packages += $($(host_arch)_$(host_os)_packages) $($(host_os)_packages) $(qt_packages_) $(rust_packages_) $(wallet_packages_) $(upnp_packages_)
+packages += $(sqlite_packages_)
 native_packages += $($(host_arch)_$(host_os)_native_packages) $($(host_os)_native_packages)
 
 ifneq ($(qt_packages_),)
@@ -123,6 +126,7 @@ $(host_prefix)/share/config.site : config.site.in $(host_prefix)/.stamp_$(final_
             -e 's|@no_qt@|$(NO_QT)|' \
             -e 's|@no_wallet@|$(NO_WALLET)|' \
             -e 's|@no_upnp@|$(NO_UPNP)|' \
+            -e 's|@no_sqlite@|$(NO_SQLITE)|' \
             -e 's|@debug@|$(DEBUG)|' \
             -e 's|@cross_toolchain_path@|$(toolchain_path)|' \
             $< > $@

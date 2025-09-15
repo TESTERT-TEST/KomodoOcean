@@ -112,6 +112,12 @@ AC_ARG_ENABLE([rust],
   [enable_rust=$enableval],
   [enable_rust=yes])
 
+AC_ARG_WITH([sqlite],
+  [AS_HELP_STRING([--with-sqlite],
+  [enable sqlite support (default is yes if libsqlite3 is found)])],
+  [use_sqlite=$withval],
+  [use_sqlite=auto])
+
 AC_ARG_WITH([miniupnpc],
   [AS_HELP_STRING([--with-miniupnpc],
   [enable UPNP (default is yes if libminiupnpc is found)])],
@@ -1036,6 +1042,26 @@ else
   AC_MSG_RESULT(no)
 fi
 
+dnl Check for sqlite3
+if test "$use_sqlite" != "no"; then
+  PKG_CHECK_MODULES([SQLITE], [sqlite3 >= 3.7.17], [have_sqlite=yes], [have_sqlite=no])
+fi
+AC_MSG_CHECKING([whether to build with support for sqlite])
+if test "$use_sqlite" = "no"; then
+  use_sqlite=no
+elif test "$have_sqlite" = "no"; then
+  if test "$use_sqlite" = "yes"; then
+    AC_MSG_ERROR([sqlite support requested but cannot be built. Use --without-sqlite])
+  fi
+  use_sqlite=no
+else
+  if test "$use_sqlite" != "no"; then
+    AC_DEFINE([USE_SQLITE],[1],[Define if sqlite support should be compiled in])
+    use_sqlite=yes
+  fi
+fi
+AC_MSG_RESULT([$use_sqlite])
+
 dnl enable mining
 AC_MSG_CHECKING([if mining should be enabled])
 if test x$enable_mining != xno; then
@@ -1137,6 +1163,7 @@ AM_CONDITIONAL([TARGET_DARWIN], [test x$TARGET_OS = xdarwin])
 AM_CONDITIONAL([BUILD_DARWIN], [test x$BUILD_OS = xdarwin])
 AM_CONDITIONAL([TARGET_WINDOWS], [test x$TARGET_OS = xwindows])
 AM_CONDITIONAL([ENABLE_WALLET],[test x$enable_wallet = xyes])
+AM_CONDITIONAL([USE_SQLITE], [test x$use_sqlite = xyes])
 AM_CONDITIONAL([ENABLE_MINING],[test x$enable_mining = xyes])
 AM_CONDITIONAL([ENABLE_RUST],[test x$enable_rust = xyes])
 AM_CONDITIONAL([ENABLE_TESTS],[test x$BUILD_TEST = xyes])
@@ -1187,6 +1214,7 @@ AC_SUBST(SSE41_CXXFLAGS)
 AC_SUBST(AVX2_CXXFLAGS)
 AC_SUBST(SHANI_CXXFLAGS)
 AC_SUBST(ARM_CRC_CXXFLAGS)
+AC_SUBST(USE_SQLITE)
 AC_SUBST(LIBTOOL_APP_LDFLAGS)
 AC_SUBST(USE_UPNP)
 AC_SUBST(BOOST_LIBS)
@@ -1252,6 +1280,7 @@ esac
 echo 
 echo "Options used to compile and link:"
 echo "  with wallet    = $enable_wallet"
+echo "  with sqlite    = $use_sqlite"
 echo "  with gui / qt  = $bitcoin_enable_qt"
 if test x$bitcoin_enable_qt != xno; then
     echo "    qt version   = $bitcoin_qt_got_major_vers"

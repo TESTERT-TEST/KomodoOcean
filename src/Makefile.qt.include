@@ -458,6 +458,10 @@ if ENABLE_WALLET
 qt_komodo_qt_LDADD += libbitcoin_wallet.a 
 endif
 
+if USE_SQLITE
+qt_komodo_qt_LDADD += $(SQLITE_LIBS)
+endif
+
 qt_komodo_qt_LDADD += \
   $(LIBCJSON) \
   $(LIBBITCOIN_CLI) \
