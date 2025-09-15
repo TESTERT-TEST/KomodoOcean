@@ -320,6 +320,10 @@ libbitcoin_server_a_SOURCES = \
   $(BITCOIN_CORE_H) \
   $(LIBZCASH_H)
 
+if USE_SQLITE
+libbitcoin_server_a_SOURCES += addressstatsdb.cpp addressstatsdb.h
+endif
+
 if ENABLE_ZMQ
 LIBBITCOIN_ZMQ=libbitcoin_zmq.a
 

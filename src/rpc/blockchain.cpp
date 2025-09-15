@@ -54,6 +54,10 @@
 
 #include "cc/CCinclude.h"
 
+#ifdef USE_SQLITE
+#include "addressstatsdb.h"
+#endif
+
 using namespace std;
 
 // TODO: remove
@@ -956,6 +960,94 @@ UniValue getblock(const UniValue& params, bool fHelp, const CPubKey& mypk)
     }
 
     return blockToJSON(block, pblockindex, verbosity >= 2);
+}
+
+UniValue getsqlitestats(const UniValue& params, bool fHelp, const CPubKey& mypk)
+{
+#ifdef USE_SQLITE
+    static const char DB_COINS = 'c';
+    UniValue ret(UniValue::VOBJ);
+    
+    LOCK(cs_main);
+    FlushStateToDisk();
+
+    auto GetBlockTimeByHeight = [&](const CChain& chain, int height) -> int64_t {
+        const CBlockIndex* tip = chain.Tip();
+        if (tip == nullptr) {
+            return -1;
+        }
+
+        if (height < 0 || height > tip->nHeight) {
+            return -1;
+        }
+
+        const CBlockIndex* pindex = tip->GetAncestor(height);
+        if (pindex == nullptr) {
+            return -1;
+        }
+
+        return pindex->GetBlockTime(); // = pindex->nTime
+    };
+
+    auto pcursor = pcoinsTip->NewDBConstIterator();
+    if (!pcursor) {
+        // No DB backend reachable (shouldn't happen, but be safe).
+        throw JSONRPCError(RPC_MISC_ERROR, "Error during access to chainstate");
+    }
+
+    try {
+        CAddressStatsDB db;
+        db.open_or_create("kmd_addresses.db");
+        db.clear_addresses(); // <-- ensure idempotency across repeated RPC runs
+        db.close();
+
+        db.open_existing("kmd_addresses.db");
+
+        pcursor->Seek(DB_COINS);
+        while (pcursor->Valid()) {
+            boost::this_thread::interruption_point();
+            std::pair<char, uint256> key;
+            CCoins coins;
+            if (pcursor->GetKey(key) && key.first == DB_COINS) {
+                if (pcursor->GetValue(coins)) {
+                    int64_t t = GetBlockTimeByHeight(chainActive, coins.nHeight);
+                    for (unsigned int i=0; i<coins.vout.size(); i++) {
+                        const CTxOut &out = coins.vout[i];
+                        if (!out.IsNull()) {
+                            CTxDestination vDest;
+                            if (ExtractDestination(out.scriptPubKey, vDest)) {
+                                EncodedAddressPayload p = EncodeDestinationPayload_NoVisitor(vDest);
+                                if (p.ok) {
+                                    CAddressActivity activity;
+                                    activity.last_in_height = coins.nHeight;
+                                    activity.last_seen_height = activity.last_in_height;
+                                    if (t != -1) {
+                                        activity.last_in_time = t;
+                                        activity.last_seen_time = activity.last_in_time;
+                                    }
+                                    // TODO: non-critical exceptions catch?
+                                    db.upsert_address(p.type, p.data, out.nValue, activity);
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    throw JSONRPCError(RPC_MISC_ERROR, "CCoinsViewDB::GetStats() : unable to read value");
+                }
+            } else {
+                break;
+            }
+            pcursor->Next();
+        }
+        db.close();
+    } catch (const std::exception& e) {
+        throw JSONRPCError(RPC_MISC_ERROR, "Error during sqlite operations"); // TODO: pass the error message here
+    }
+
+    return ret;
+#else
+    throw JSONRPCError(RPC_MISC_ERROR, "Compiled without sqlite support (required for getsqlitestats RPC)");
+#endif
 }
 
 UniValue gettxoutsetinfo(const UniValue& params, bool fHelp, const CPubKey& mypk)
@@ -1919,6 +2011,7 @@ static const CRPCCommand commands[] =
     { "blockchain",         "getrawmempool",          &getrawmempool,          true  },
     { "blockchain",         "gettxout",               &gettxout,               true  },
     { "blockchain",         "gettxoutsetinfo",        &gettxoutsetinfo,        true  },
+    { "blockchain",         "getsqlitestats",         &getsqlitestats,         true  },
     { "blockchain",         "verifychain",            &verifychain,            true  },
 
     /* Not shown in help */

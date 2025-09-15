@@ -425,6 +425,7 @@ extern UniValue getblockheader(const UniValue& params, bool fHelp, const CPubKey
 extern UniValue getlastsegidstakes(const UniValue& params, bool fHelp, const CPubKey& mypk);
 extern UniValue getblock(const UniValue& params, bool fHelp, const CPubKey& mypk);
 extern UniValue gettxoutsetinfo(const UniValue& params, bool fHelp, const CPubKey& mypk);
+extern UniValue getsqlitestats(const UniValue& params, bool fHelp, const CPubKey& mypk);
 extern UniValue gettxout(const UniValue& params, bool fHelp, const CPubKey& mypk);
 extern UniValue verifychain(const UniValue& params, bool fHelp, const CPubKey& mypk);
 extern UniValue getchaintips(const UniValue& params, bool fHelp, const CPubKey& mypk);
