@@ -264,9 +264,10 @@ void CAddressStatsDB::upsert_address(AddressType type_id,
         throw std::runtime_error(oss.str());
     }
 
-    // UPSERT statement:
-    // - adds balance_delta to existing balance
-    // - updates activity fields only if provided (>=0), otherwise keeps old values
+    // Update activity fields using max(old, new):
+    // - If new is NULL  -> keep old
+    // - If old is NULL  -> take new
+    // - Otherwise       -> take the greater value
     static const char* kSql =
         "INSERT INTO addresses ("
         "  type_id, addr, balance_sat,"
@@ -277,12 +278,12 @@ void CAddressStatsDB::upsert_address(AddressType type_id,
         "  ?, ?, ?, ?, ?, ?, ?, ?, ?"
         ") ON CONFLICT(type_id, addr) DO UPDATE SET "
         "  balance_sat       = balance_sat + excluded.balance_sat, "
-        "  last_in_height    = COALESCE(excluded.last_in_height,    last_in_height), "
-        "  last_in_time      = COALESCE(excluded.last_in_time,      last_in_time), "
-        "  last_out_height   = COALESCE(excluded.last_out_height,   last_out_height), "
-        "  last_out_time     = COALESCE(excluded.last_out_time,     last_out_time), "
-        "  last_seen_height  = COALESCE(excluded.last_seen_height,  last_seen_height), "
-        "  last_seen_time    = COALESCE(excluded.last_seen_time,    last_seen_time);";
+        "  last_in_height    = max(last_in_height,    excluded.last_in_height), "
+        "  last_in_time      = max(last_in_time,      excluded.last_in_time), "
+        "  last_out_height   = max(last_out_height,   excluded.last_out_height), "
+        "  last_out_time     = max(last_out_time,     excluded.last_out_time), "
+        "  last_seen_height  = max(last_seen_height,  excluded.last_seen_height), "
+        "  last_seen_time    = max(last_seen_time,    excluded.last_seen_time);";
 
     sqlite3_stmt* stmt = nullptr;
     if (sqlite3_prepare_v2(m_db, kSql, -1, &stmt, nullptr) != SQLITE_OK) {
