@@ -971,7 +971,7 @@ UniValue getsqlitestats(const UniValue& params, bool fHelp, const CPubKey& mypk)
     LOCK(cs_main);
     FlushStateToDisk();
 
-    auto GetBlockTimeByHeight = [&](const CChain& chain, int height) -> int64_t {
+/*     auto GetBlockTimeByHeight = [&](const CChain& chain, int height) -> int64_t {
         const CBlockIndex* tip = chain.Tip();
         if (tip == nullptr) {
             return -1;
@@ -987,7 +987,17 @@ UniValue getsqlitestats(const UniValue& params, bool fHelp, const CPubKey& mypk)
         }
 
         return pindex->GetBlockTime(); // = pindex->nTime
-    };
+    }; */
+
+    // cache block times
+    const CBlockIndex* tip = chainActive.Tip();
+    std::vector<int64_t> block_time_by_height;
+    if (tip) {
+        block_time_by_height.resize(tip->nHeight + 1, -1);
+        for (const CBlockIndex* pindex = tip; pindex; pindex = pindex->pprev) {
+            block_time_by_height[pindex->nHeight] = pindex->GetBlockTime();
+        }
+    }
 
     auto pcursor = pcoinsTip->NewDBConstIterator();
     if (!pcursor) {
@@ -1010,7 +1020,13 @@ UniValue getsqlitestats(const UniValue& params, bool fHelp, const CPubKey& mypk)
             CCoins coins;
             if (pcursor->GetKey(key) && key.first == DB_COINS) {
                 if (pcursor->GetValue(coins)) {
-                    int64_t t = GetBlockTimeByHeight(chainActive, coins.nHeight);
+                    // int64_t t = GetBlockTimeByHeight(chainActive, coins.nHeight);
+                    int h = coins.nHeight;
+                    int64_t t = -1;
+                    if (h >= 0 && h < (int)block_time_by_height.size()) {
+                        t = block_time_by_height[h];
+                    }
+
                     for (unsigned int i=0; i<coins.vout.size(); i++) {
                         const CTxOut &out = coins.vout[i];
                         if (!out.IsNull()) {
@@ -1026,6 +1042,10 @@ UniValue getsqlitestats(const UniValue& params, bool fHelp, const CPubKey& mypk)
                                         activity.last_seen_time = activity.last_in_time;
                                     }
                                     // TODO: non-critical exceptions catch?
+                                    // std::string a = out.scriptPubKey.ToString();
+                                    // std::string b = HexStr(p.data.begin(), p.data.end());
+                                    // std::string c = EncodeDestination(vDest);
+                                    // std::cerr << a << " - " << b << " - " << c << std::endl;
                                     db.upsert_address(p.type, p.data, out.nValue, activity);
                                 }
                             }
