@@ -6083,14 +6083,8 @@ bool static LoadBlockIndexDB()
 {
     const CChainParams& chainparams = Params();
     LogPrintf("%s: start loading guts\n", __func__);
-    if (GetBoolArg("-fastguts", false)) {
-        /* experimental: faster load, but x2 memory consumption */
-        if (!pblocktree->LoadBlockIndexGutsFast())
-            return false;
-    } else {
-        if (!pblocktree->LoadBlockIndexGuts())
-            return false;
-    }
+    if (!pblocktree->LoadBlockIndexGuts())
+        return false;
     LogPrintf("%s: loaded guts\n", __func__);
     boost::this_thread::interruption_point();
     
