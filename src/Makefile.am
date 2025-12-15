@@ -235,7 +235,8 @@ BITCOIN_CORE_H = \
   zmq/zmqabstractnotifier.h \
   zmq/zmqconfig.h\
   zmq/zmqnotificationinterface.h \
-  zmq/zmqpublishnotifier.h
+  zmq/zmqpublishnotifier.h \
+  Gulden/auto_checkpoints.h
 
 
 obj/build.h: FORCE
@@ -316,6 +317,7 @@ libbitcoin_server_a_SOURCES = \
   txdb.cpp \
   txmempool.cpp \
   validationinterface.cpp \
+  Gulden/auto_checkpoints.cpp \
   cc/cclib.cpp \
   $(BITCOIN_CORE_H) \
   $(LIBZCASH_H)
