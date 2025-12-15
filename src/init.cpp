@@ -1122,7 +1122,6 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         fPruneMode = true;
     }
 
-    ECC_Start();
     RegisterAllCoreRPCCommands(tableRPC);
 #ifdef ENABLE_WALLET
     bool fDisableWallet = GetBoolArg("-disablewallet", false);
@@ -1196,29 +1195,6 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     bSpendZeroConfChange = GetBoolArg("-spendzeroconfchange", true);
     fSendFreeTransactions = GetBoolArg("-sendfreetransactions", false);
 
-    //Gulden - generate private/public key pair for alert of checkpoint system
-    if (mapArgs.count("-genkeypair"))
-    {
-        CKey key;
-        key.MakeNewKey(false);
-
-        CPrivKey vchPrivKey = key.GetPrivKey();
-        printf("PrivateKey %s\n", HexStr<CPrivKey::iterator>(vchPrivKey.begin(), vchPrivKey.end()).c_str());
-        CPubKey vchPubKey = key.GetPubKey();
-        vchPubKey.Decompress();
-        printf("PublicKey %s\n", HexStr(vchPubKey.begin(), vchPubKey.end()).c_str());
-        return false;
-    }
-
-    //Gulden - private key for auto checkpoint system.
-    if (mapArgs.count("-checkpointkey"))
-    {
-        std::string sKey=mapArgs["-checkpointkey"];
-        if (!Checkpoints::SetCheckpointPrivKey(sKey))
-            return InitError(_("Unable to sign checkpoint, wrong checkpointkey?\n"));
-        else
-            LogPrintf("Checkpoint server enabled\n");
-    }
     std::string strWalletFile = GetArg("-wallet", DEFAULT_WALLET_DAT);
 #endif // ENABLE_WALLET
 
@@ -1304,6 +1280,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     // Initialize elliptic curve code
     std::string sha256_algo = SHA256AutoDetect();
     LogPrintf("Using the '%s' SHA256 implementation\n", sha256_algo);
+    ECC_Start();
     globalVerifyHandle.reset(new ECCVerifyHandle());
 
     // Sanity check
