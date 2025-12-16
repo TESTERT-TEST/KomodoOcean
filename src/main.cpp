@@ -5252,8 +5252,6 @@ bool CheckBlock(int32_t *futureblockp,int32_t height,CBlockIndex *pindex,const C
                              REJECT_INVALID, "bad-cb-multiple");
 
     // Check transactions
-    CTransaction sTx;
-    CTransaction *ptx = NULL;
     if ( ASSETCHAINS_CC != 0 && !fCheckPOW )
         return true;
 
@@ -5335,11 +5333,6 @@ bool CheckBlock(int32_t *futureblockp,int32_t height,CBlockIndex *pindex,const C
         //    LogPrintf("check deposit rejection\n");
         LogPrintf("CheckBlockHeader komodo_check_deposit error");
         return(false);
-    }
-
-    if (ptx)
-    {
-        SyncWithWallets(*ptx, &block);
     }
 
     if ( ASSETCHAINS_CC != 0 )
