@@ -41,7 +41,7 @@ namespace Checkpoints
 
             asset_chains = {
                 { "CCL", { nSyncChkPointTimestamp, "03fdc6ca526c0cfaed2211d03dc2ea9c083aea127c7769d97dc92fed2085803ce3" }},
-                // { "CLC", { nSyncChkPointTimestamp, "03fdc6ca526c0cfaed2211d03dc2ea9c083aea127c7769d97dc92fed2085803ce3" }},
+                { "CLC", { nSyncChkPointTimestamp, "03fdc6ca526c0cfaed2211d03dc2ea9c083aea127c7769d97dc92fed2085803ce3" }},
                 { "GLEEC", { nSyncChkPointTimestamp, "03fdc6ca526c0cfaed2211d03dc2ea9c083aea127c7769d97dc92fed2085803ce3" }},
                 // { "ILN", { nSyncChkPointTimestamp, "03fdc6ca526c0cfaed2211d03dc2ea9c083aea127c7769d97dc92fed2085803ce3" }},
                 // { "KOIN", { nSyncChkPointTimestamp, "03fdc6ca526c0cfaed2211d03dc2ea9c083aea127c7769d97dc92fed2085803ce3" }},
