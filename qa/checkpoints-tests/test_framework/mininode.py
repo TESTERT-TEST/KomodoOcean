@@ -1523,6 +1523,93 @@ class msg_alert(object):
         return "msg_alert(alert=%s)" % (repr(self.alert), )
 
 
+class CUnsignedSyncChkptMessage(object):
+    def __init__(self):
+        self.nVersion = 1
+        self.hashCheckpoint = 0
+
+    def deserialize(self, f):
+        self.nVersion = struct.unpack("<i", f.read(4))[0]
+        self.hashCheckpoint = deser_uint256(f)
+
+    def serialize(self):
+        r = b""
+        r += struct.pack("<i", self.nVersion)
+        r += ser_uint256(self.hashCheckpoint)
+        return r
+
+    def __repr__(self):
+        return "CUnsignedSyncChkptMessage(nVersion %d, hashCheckpoint %064x)" \
+            % (self.nVersion, self.hashCheckpoint)
+
+
+class CSyncChkptMessage(object):
+    def __init__(self):
+        self.vchMsg = b""
+        self.vchSig = b""
+        self._unsigned = None  # Cache for deserialized data
+
+    def deserialize(self, f):
+        self.vchMsg = deser_string(f)
+        self.vchSig = deser_string(f)
+        self._unsigned = None  # Reset cache on new deserialization
+
+    def serialize(self):
+        r = b""
+        r += ser_string(self.vchMsg)
+        r += ser_string(self.vchSig)
+        return r
+
+    def get_unsigned(self):
+        """Deserializes the contents of vchMsg and returns CUnsignedSyncChkptMessage"""
+        if self._unsigned is None and len(self.vchMsg) > 0:
+            f = BytesIO(self.vchMsg)
+            self._unsigned = CUnsignedSyncChkptMessage()
+            self._unsigned.deserialize(f)
+        return self._unsigned
+
+    @property
+    def nVersion(self):
+        """Returns nVersion from deserialized vchMsg"""
+        unsigned = self.get_unsigned()
+        return unsigned.nVersion if unsigned else None
+
+    @property
+    def hashCheckpoint(self):
+        """Returns hashCheckpoint from deserialized vchMsg"""
+        unsigned = self.get_unsigned()
+        return unsigned.hashCheckpoint if unsigned else None
+
+    def __repr__(self):
+        unsigned = self.get_unsigned()
+        if unsigned:
+            return "CSyncChkptMessage(vchMsg.sz %d, vchSig.sz %d, %s)" \
+                % (len(self.vchMsg), len(self.vchSig), repr(unsigned))
+        else:
+            return "CSyncChkptMessage(vchMsg.sz %d, vchSig.sz %d)" \
+                % (len(self.vchMsg), len(self.vchSig))
+
+
+class msg_checkpoint(object):
+    command = b"checkpoint"
+
+    def __init__(self):
+        self.checkpoint = CSyncChkptMessage()
+
+    def deserialize(self, f):
+        self.checkpoint = CSyncChkptMessage()
+        self.checkpoint.deserialize(f)
+
+    def serialize(self):
+        r = b""
+        r += self.checkpoint.serialize()
+        return r
+
+    def __repr__(self):
+        return "msg_checkpoint(checkpoint=%s)" % (repr(self.checkpoint), )
+
+
+
 class msg_inv(object):
     command = b"inv"
 
@@ -1863,7 +1950,8 @@ class NodeConnCB(object):
             b"headers": self.on_headers,
             b"getheaders": self.on_getheaders,
             b"reject": self.on_reject,
-            b"mempool": self.on_mempool
+            b"mempool": self.on_mempool,
+            b"checkpoint": self.on_checkpoint
         }
 
     def deliver(self, conn, message):
@@ -1910,6 +1998,7 @@ class NodeConnCB(object):
     def on_close(self, conn): pass
     def on_mempool(self, conn): pass
     def on_pong(self, conn, message): pass
+    def on_checkpoint(self, conn, message): pass
 
 
 # The actual NodeConn class
@@ -1932,7 +2021,8 @@ class NodeConn(asyncore.dispatcher):
         b"headers": msg_headers,
         b"getheaders": msg_getheaders,
         b"reject": msg_reject,
-        b"mempool": msg_mempool
+        b"mempool": msg_mempool,
+        b"checkpoint": msg_checkpoint
     }
     MAGIC_BYTES = {
         "mainnet": b"\x24\xe9\x27\x64",   # mainnet

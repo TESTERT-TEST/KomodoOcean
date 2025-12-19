@@ -85,6 +85,9 @@ class TestNode(NodeConnCB):
         success = wait_until(received_pong, timeout)
         self.ping_counter += 1
         return success
+    def on_checkpoint(self, conn, message):
+        self.last_checkpoint = message
+        print(f"Checkpoint received: {message}")
 
 
 def feed_node_with_blocks(filename, node_index, test_node, nodes):
@@ -97,11 +100,11 @@ def feed_node_with_blocks(filename, node_index, test_node, nodes):
         f = BytesIO(hex_str_to_bytes(hex_block.strip()))
         block.deserialize(f)
         block.calc_sha256()
+        print(f"Block #{ht} / {nodes[node_index].getblockcount()}: {block.hash}")
         test_node.send_message(msg_block(block))
         #time.sleep(0.01)
         test_node.sync_with_ping()
         #time.sleep(0.01)
-        print("Block #{} / {}: {}".format(ht, nodes[node_index].getblockcount(), block.hash))
     blocks_file.close()
 
 
@@ -109,6 +112,7 @@ def main():
     
     # logging.basicConfig(level=logging.DEBUG)
     # logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     print("Preparing test environment...")
 
     # ../../src/qt/komodo-qt -ac_name=PUNTEN -ac_reward=300000000 -ac_nk="96,5" -testnode=1
