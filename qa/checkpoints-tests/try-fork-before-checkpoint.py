@@ -20,7 +20,9 @@ from test_framework.mininode import(
     msg_block,
     msg_ping,
     msg_pong,
-    mininode_lock
+    mininode_lock,
+    uint256_from_str,
+    CUnsignedSyncChkptMessage
 )
 
 import time
@@ -37,6 +39,7 @@ class TestNode(NodeConnCB):
         self.ping_counter = 1
         self.last_pong = msg_pong()
         self.conn_closed = False
+        self.checkpoints = []
 
     def add_connection(self, conn):
         self.connection = conn
@@ -86,7 +89,7 @@ class TestNode(NodeConnCB):
         self.ping_counter += 1
         return success
     def on_checkpoint(self, conn, message):
-        self.last_checkpoint = message
+        self.checkpoints.append(message)
         print(f"Checkpoint received: {message}")
 
 
@@ -197,6 +200,33 @@ def main():
         sys.exit(1)
     print(f"✓ Checkpoint verification passed: checkpoint={getcheckpoint_result.get('checkpoint')}, height={getcheckpoint_result.get('height')}")
 
+    # Send checkpoint from checkpoints[0] if available
+    # i.e. trying to send old checkpoint to the node
+    # ValidateSyncCheckpoint Warning: checkpoint is old: new checkpoint height=1, existing checkpoint height=123 (possibly reorg)
+    if len(test_node.checkpoints) > 0:
+        test_node.send_message(test_node.checkpoints[0])
+        test_node.sync_with_ping()
+        print(f"Sent checkpoint: {test_node.checkpoints[0]}")
+
+    # Send modified (invalid) checkpoint to the node
+    # ERROR: CSyncCheckpoint::CheckSignature() : verify signature failed
+    # WARNING: ProcessMessage: Failed to process received checkpoint: signature check.
+    invalid_checkpoint = test_node.checkpoints[0]
+    # Get the unsigned message, modify hashCheckpoint, and serialize back
+    unsigned = invalid_checkpoint.checkpoint.get_unsigned()
+    if unsigned:
+        # Convert hex string to uint256
+        invalid_hash_hex = "0000000000000000000000000000000000000000000000000000000000000000"
+        invalid_hash_bytes = hex_str_to_bytes(invalid_hash_hex)
+        unsigned.hashCheckpoint = uint256_from_str(invalid_hash_bytes)
+        # Serialize the modified unsigned message back to vchMsg
+        invalid_checkpoint.checkpoint.vchMsg = unsigned.serialize()
+        # Reset cache so it will be recreated if needed
+        invalid_checkpoint.checkpoint._unsigned = None
+    
+    test_node.send_message(invalid_checkpoint)
+    test_node.sync_with_ping()
+    print(f"Sent invalid checkpoint: {invalid_checkpoint}")
 
     connections[0].disconnect_node()
     connections.pop(0) # close p2p connection with first node
