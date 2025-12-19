@@ -58,8 +58,8 @@ namespace Checkpoints
                 
                 // test chain
                 // auto checkpoint active since Dec, 01 2025
-                { "GULDEN", { 1764606619, "02f9dc5271cc789aab77fb27e8007e681f93135cfcf92d4a514a4649c0e36f14ad" }}
-
+                { "GULDEN", { 1764606619, "02f9dc5271cc789aab77fb27e8007e681f93135cfcf92d4a514a4649c0e36f14ad" }},
+                { "PUNTEN", { 1766155441, "0283d092ce9e7f56c68ef0965b74584a3e62d9cb696bc400ea7e375ca8e629096b" }},
             };
         }
 
