@@ -1,0 +1,9 @@
+RH7MEByvbjJMCPgGmdd1Vf8TJPgaEzvy5x
+0283d092ce9e7f56c68ef0965b74584a3e62d9cb696bc400ea7e375ca8e629096b
+UqzFP1iqnowunSPZ3vVZMb9ybnpPM2XXGnNjd3cbaQsXdrc4SrCA
+
+1766155441
+Fri Dec 19 2025 14:44:01 GMT+0000
+Fri Dec 19 2025 15:44:01 GMT+0100 (Central European Standard Time)
+
+./src/qt/komodo-qt -ac_name=PUNTEN -ac_reward=300000000 -ac_nk="96,5" -testnode=1

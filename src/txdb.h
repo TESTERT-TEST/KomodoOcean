@@ -93,6 +93,7 @@ public:
     bool GetStats(CCoinsStats &stats) const;
 };
 
+
 /** 
  * Access to the block database (blocks/index/)
  * This database consists of:
@@ -278,7 +279,6 @@ public:
      * @returns true on success
      */
     bool LoadBlockIndexGuts();
-    bool LoadBlockIndexGutsFast();
     /****
      * Check if a block is on the active chain
      * @param hash the block hash

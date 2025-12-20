@@ -22,6 +22,7 @@
 #include "chain.h"
 #include "chainparams.h"
 #include "checkpoints.h"
+#include "Gulden/auto_checkpoints.h"
 #include "crosschain.h"
 #include "base58.h"
 #include "consensus/validation.h"
@@ -1362,6 +1363,10 @@ UniValue getblockchaininfo(const UniValue& params, bool fHelp, const CPubKey& my
             "  \"chainwork\": \"xxxx\"     (string) total amount of work in active chain, in hexadecimal\n"
             "  \"size_on_disk\": xxxxxx,   (numeric) the estimated size of the block and undo files on disk\n"
             "  \"commitments\": xxxxxx,    (numeric) the current number of note commitments in the commitment tree\n"
+            "  \"syncCheckpoint\": {\n"
+            "     \"height\": xxxx,        (numeric) latest sync checkpoint height\n"
+            "     \"blockHash\": \"...\"     (string) latest sync checkpoint block hash\n"
+            "  },\n"
             "  \"chainSupply\": {          (object) information about the total supply\n"
             "      \"monitored\": xx,           (boolean) true if the total supply is being monitored\n"
             "      \"chainValue\": xxxxxx,      (numeric, optional) total chain supply\n"
@@ -1399,6 +1404,16 @@ UniValue getblockchaininfo(const UniValue& params, bool fHelp, const CPubKey& my
             "  \"consensus\": {               (object) branch IDs of the current and upcoming consensus rules\n"
             "     \"chaintip\": \"xxxxxxxx\",   (string) branch ID used to validate the current chain tip\n"
             "     \"nextblock\": \"xxxxxxxx\"   (string) branch ID that the next block will be validated under\n"
+            "  },\n"
+            "  \"syncCheckpointUpgrade\": {               (object) sync checkpoint and dPoW status\n"
+            "     \"dpow_active\": xx,                    (boolean) whether dPoW (delayed Proof of Work) is active\n"
+            "     \"sync_checkpoint_active\": xx,         (boolean) whether sync checkpoint upgrade is active\n"
+            "     \"sync_checkpoint_expected\": xx,       (boolean) whether sync checkpoint upgrade is expected\n"
+            "     \"activation_height\": xxxxxx,          (numeric, optional) block height of sync checkpoint activation\n"
+            "     \"activation_timestamp\": xxxxxx,       (numeric, optional) timestamp of sync checkpoint activation\n"
+            "     \"activation_timestamp_utc\": \"xxxx\", (string, optional) UTC timestamp of sync checkpoint activation\n"
+            "     \"masterpubKey\": \"xxxx\",             (string, optional) master public key for sync checkpoint\n"
+            "     \"init\": xx                            (boolean, optional) whether sync checkpoint initialization succeeded\n"
             "  }\n"
             "}\n"
             "\nExamples:\n"
@@ -1429,6 +1444,21 @@ UniValue getblockchaininfo(const UniValue& params, bool fHelp, const CPubKey& my
     SproutMerkleTree tree;
     pcoinsTip->GetSproutAnchorAt(pcoinsTip->GetBestAnchor(SPROUT), tree);
     obj.push_back(Pair("commitments",           static_cast<uint64_t>(tree.size())));
+
+    int nHeight = chainActive.Height();
+    int64_t timestamp = komodo_heightstamp(nHeight);
+    {
+        LOCK(Checkpoints::cs_hashSyncCheckpoint);
+        if (Checkpoints::IsSyncCheckpointUpgradeActive(nHeight, timestamp)) {
+            CBlockIndex *psyncCheckpoint = Checkpoints::GetLastSyncCheckpoint();
+            UniValue blockinfo(UniValue::VOBJ);
+            if (psyncCheckpoint) {
+                blockinfo.push_back(Pair("height", psyncCheckpoint->nHeight));
+                blockinfo.push_back(Pair("blockHash", psyncCheckpoint->phashBlock ? (*psyncCheckpoint->phashBlock).GetHex() : uint256().GetHex()));
+            }
+            obj.push_back(Pair("syncCheckpoint", blockinfo));
+        }
+    }
 
     CBlockIndex* tip = chainActive.Tip();
     obj.pushKV("chainSupply", ValuePoolDesc(boost::none, tip->nChainTotalSupply, boost::none));
@@ -1465,6 +1495,37 @@ UniValue getblockchaininfo(const UniValue& params, bool fHelp, const CPubKey& my
 
         obj.push_back(Pair("pruneheight",        block->nHeight));
     }
+
+    // sync checkpoint and dpow status
+    UniValue syncCheckpointUpgrade(UniValue::VOBJ);
+    bool isSunsettingActive = IsSunsettingActive(tip->nHeight, tip->GetBlockTime()); // dPoW is active when !isSunsettingActive
+    syncCheckpointUpgrade.push_back(Pair("dpow_active", !isSunsettingActive ? "true" : "false"));
+
+    Checkpoints::CSyncChkParams syncChkParams;
+    bool isSyncCheckpointActive = Checkpoints::IsSyncCheckpointUpgradeActive(syncChkParams, tip->nHeight, tip->GetBlockTime());
+    syncCheckpointUpgrade.push_back(Pair("sync_checkpoint_active", isSyncCheckpointActive));
+    bool fValidParams = (!syncChkParams.masterPubKey.empty() && syncChkParams.activeAt != -1);
+    syncCheckpointUpgrade.push_back(Pair("sync_checkpoint_expected", fValidParams));
+
+    if (fValidParams) {
+        if (syncChkParams.activeAt < LOCKTIME_THRESHOLD) {
+            syncCheckpointUpgrade.push_back(Pair("activation_height", syncChkParams.activeAt));
+        } else {
+            syncCheckpointUpgrade.push_back(Pair("activation_timestamp", syncChkParams.activeAt));
+            syncCheckpointUpgrade.push_back(Pair("activation_timestamp_utc", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", syncChkParams.activeAt)));
+        }
+        syncCheckpointUpgrade.push_back(Pair("masterpubKey", syncChkParams.masterPubKey));
+
+        if (isSyncCheckpointActive) {
+            if (TryInitSyncCheckpoint(syncChkParams)) {
+                syncCheckpointUpgrade.push_back(Pair("init", true));
+            } else {
+                syncCheckpointUpgrade.push_back(Pair("init", false));
+            }
+        }
+    }
+    obj.push_back(Pair("syncCheckpointUpgrade", syncCheckpointUpgrade));
+
     return obj;
 }
 

@@ -50,6 +50,19 @@
                     "ignoreFailures": true
                 }
             ]
+        },
+        {
+            "name": "Python: try-fork-before-checkpoint.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/qa/checkpoints-tests/try-fork-before-checkpoint.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "python": "${workspaceFolder}/qa/checkpoints-tests/venv/bin/python3",
+            "cwd": "${workspaceFolder}/qa/checkpoints-tests",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/qa/checkpoints-tests"
+            }
         }
     ]
 }

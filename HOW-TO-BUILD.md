@@ -67,6 +67,21 @@ cd komodo
 ```
 This can take some time.
 
+**Note:** If after upgrading macOS you encounter a libsodium build error, such as:
+```
+libtool: Version mismatch error. This is libtool 2.4.7, but the libtool: definition of this LT_INIT comes from libtool 2.4.6. libtool: You should recreate aclocal.m4 with macros from libtool 2.4.7 libtool: and run autoconf again.
+```
+Or:
+```
+sh: /opt/homebrew/bin/autom4te: /usr/bin/perl5.30: bad interpreter: No such file or directory aclocal: error: autom4te failed with exit status: 126
+```
+Don't forget to run:
+```shell
+brew install perl
+brew reinstall autoconf automake libtool
+```
+After this, the libsodium build should complete without errors.
+
 macOS 12 (Monterrey) have incompatible version of Xcode `14.2` (Build version 14C18), to build on Monterrey you'll need to install the older version `13.2.1` using the following steps:
 
 - Download the specific Xcode 13.2.1 version from [here](https://stackoverflow.com/questions/10335747) or [here](https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_13.2.1/Xcode_13.2.1.xip).
@@ -79,6 +94,8 @@ sudo xcode-select -switch /Applications/Xcode_13.2.1.app
 ```
 xcodebuild -version
 ```
+
+**Note:** The current build is confirmed on macOS Tahoe 26.2 (25C56), with Xcode 15.1 and clang 5.0.0.
 
 #### Windows (Cross-compile)
 Use a debian cross-compilation setup with mingw for windows and run:
