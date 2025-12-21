@@ -84,8 +84,12 @@ RUN set -euxo pipefail \
       fi \
       && ( gpgconf --kill dirmngr || true ) \
       && ( gpgconf --kill gpg-agent || true ); \
-    fi \
-    && export MAKEFLAGS="-j $(($(nproc)-1))" && ./zcutil/build-no-qt.sh $MAKEFLAGS
+    fi
+
+RUN set -euxo pipefail \
+    && cd /KomodoOcean \
+    && export MAKEFLAGS="-j$(( $(nproc) > 1 ? $(nproc) / 2 : 1 ))" \
+    && ./zcutil/build-no-qt.sh $MAKEFLAGS
 
 ## Build Final Image
 FROM ubuntu:20.04
