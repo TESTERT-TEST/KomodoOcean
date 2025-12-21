@@ -103,6 +103,11 @@ def feed_node_with_blocks(filename, node_index, test_node, nodes):
         f = BytesIO(hex_str_to_bytes(hex_block.strip()))
         block.deserialize(f)
         block.calc_sha256()
+        # latch ibd to false: chainActive.Tip()->GetBlockTime() < (GetTime() - nMaxTipAge) should be false
+        if node_index == 0 and ht == 1:
+            nodes[node_index].setmocktime(block.nTime)
+        else:
+            nodes[node_index].setmocktime(0)
         print(f"Block #{ht} / {nodes[node_index].getblockcount()}: {block.hash}")
         test_node.send_message(msg_block(block))
         #time.sleep(0.01)

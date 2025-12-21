@@ -29,6 +29,30 @@
             ]
         },
         {
+            "name": "(gdb) Launch (komodo-qt, PUNTEN)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/qt/komodo-qt",
+            "args": ["-ac_name=PUNTEN", "-ac_reward=300000000", "-ac_nk=96,5", "-testnode=1", "-debug=chk"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "(gdb) Launch (komodo-test)",
             "type": "cppdbg",
             "request": "launch",
