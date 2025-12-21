@@ -807,7 +807,8 @@ UniValue setmocktime(const UniValue& params, bool fHelp, const CPubKey& mypk)
             "   Pass 0 to go back to using the system time."
         );
 
-    if (!Params().MineBlocksOnDemand())
+    // Allow setmocktime for regression testing (-regtest mode) and PUNTEN AC
+    if (!(Params().NetworkIDString() == "regtest" || chainName.ToString() == "PUNTEN"))
         throw runtime_error("setmocktime for regression testing (-regtest mode) only");
 
     // cs_vNodes is locked and node send/receive times are updated
