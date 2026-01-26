@@ -22,4 +22,24 @@ if [[ "$nocheck" -eq 0 && "$(stat -c '%u:%g' /data)" != "65534:65534" ]]; then
 fi
 
 /app/fetch-params.sh
+
+# Check and create /data/.komodo directory with current user permissions
+if [ ! -d "/data/.komodo" ]; then
+    echo "Creating /data/.komodo directory..."
+    mkdir -p /data/.komodo
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to create /data/.komodo directory" >&2
+        exit 1
+    fi
+fi
+
+# Check write permissions to /data/.komodo directory
+if ! touch /data/.komodo/.writeable 2>/dev/null; then
+    echo "ERROR: Cannot write to /data/.komodo directory. Please check permissions." >&2
+    exit 1
+fi
+
+# Remove test file after successful check
+rm -f /data/.komodo/.writeable
+
 exec /app/komodod -datadir=/data/.komodo "$@"
