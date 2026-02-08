@@ -97,11 +97,21 @@ static bool ParseHex(const std::string& hex, unsigned char* out, size_t outlen)
     return true;
 }
 
-// Compute SHA256 of file (EVP API - compatible with OpenSSL 3.0+)
-static bool ComputeFileSHA256(const fs::path& path, unsigned char hash[32])
+// Compute SHA256 of file with progress (EVP API - compatible with OpenSSL 3.0+)
+// filename_for_progress: if non-null, displays verification progress
+static bool ComputeFileSHA256(const fs::path& path, unsigned char hash[32],
+                              const char* filename_for_progress = NULL)
 {
     FILE* f = fopen(path.string().c_str(), "rb");
     if (!f) return false;
+
+    boost::uintmax_t file_size = 0;
+    try {
+        file_size = fs::file_size(path);
+    } catch (...) {
+        fclose(f);
+        return false;
+    }
 
     EVP_MD_CTX* ctx = EVP_MD_CTX_new();
     if (!ctx) { fclose(f); return false; }
@@ -110,8 +120,23 @@ static bool ComputeFileSHA256(const fs::path& path, unsigned char hash[32])
     if (ok) {
         unsigned char buf[65536];
         size_t n;
+        boost::uintmax_t total_read = 0;
+        int last_pct = -1;
+
         while (ok && (n = fread(buf, 1, sizeof(buf), f)) > 0) {
             ok = EVP_DigestUpdate(ctx, buf, n);
+            total_read += n;
+
+            if (filename_for_progress && file_size > 0) {
+                int pct = static_cast<int>(100 * total_read / file_size);
+                if (pct != last_pct || total_read == file_size) {
+                    last_pct = pct;
+                    fprintf(stderr, "\r  %s: verifying %.1f%% (%llu / %llu MB)   ",
+                            filename_for_progress, 100.0 * total_read / file_size,
+                            static_cast<unsigned long long>(total_read) / (1024 * 1024),
+                            static_cast<unsigned long long>(file_size) / (1024 * 1024));
+                }
+            }
         }
         ok = ok && !ferror(f) && EVP_DigestFinal_ex(ctx, hash, NULL);
     }
@@ -120,14 +145,26 @@ static bool ComputeFileSHA256(const fs::path& path, unsigned char hash[32])
     return ok;
 }
 
-// Compare hash with expected hex string
-static bool VerifySHA256(const fs::path& path, const char* expected_hex)
+// Compare hash with expected hex string, optionally with progress display
+static bool VerifySHA256(const fs::path& path, const char* expected_hex,
+                        const char* filename_for_progress = NULL)
 {
     const size_t SHA256_LEN = 32;
     unsigned char computed[SHA256_LEN];
     unsigned char expected[SHA256_LEN];
 
-    if (!ComputeFileSHA256(path, computed)) return false;
+    if (!ComputeFileSHA256(path, computed, filename_for_progress)) return false;
+    if (filename_for_progress) {
+        try {
+            boost::uintmax_t file_size = fs::file_size(path);
+            fprintf(stderr, "\r  %s: verifying 100.0%% (%llu / %llu MB)   \n",
+                    filename_for_progress,
+                    static_cast<unsigned long long>(file_size) / (1024 * 1024),
+                    static_cast<unsigned long long>(file_size) / (1024 * 1024));
+        } catch (...) {
+            fprintf(stderr, "\n");
+        }
+    }
     if (!ParseHex(expected_hex, expected, SHA256_LEN)) return false;
 
     return memcmp(computed, expected, SHA256_LEN) == 0;
@@ -181,7 +218,8 @@ static bool DownloadFile(const std::string& url, const fs::path& output_path)
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, ProgressCallback);
-    curl_easy_setopt(curl, CURLOPT_XFERINFODATA, output_path.filename().string().c_str());
+    std::string progress_name = output_path.filename().string();
+    curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_name.c_str());
 
     CURLcode res = curl_easy_perform(curl);
     fclose(f);
@@ -211,7 +249,7 @@ static bool FetchParam(const fs::path& params_dir, const ParamInfo& param)
     fs::path output_path = params_dir / param.filename;
 
     if (fs::exists(output_path)) {
-        if (VerifySHA256(output_path, param.expected_sha256_hex)) {
+        if (VerifySHA256(output_path, param.expected_sha256_hex, param.filename)) {
             std::cout << param.filename << ": already exists, checksum OK" << std::endl;
             return true;
         }
@@ -229,9 +267,17 @@ static bool FetchParam(const fs::path& params_dir, const ParamInfo& param)
         return false;
     }
 
-    fprintf(stderr, "\r  %s: 100%% - verifying...   \n", param.filename);
+    try {
+        boost::uintmax_t file_size = fs::file_size(dl_path);
+        fprintf(stderr, "\r  %s: 100.0%% (%llu / %llu MB) - verifying...   \n",
+                param.filename,
+                static_cast<unsigned long long>(file_size) / (1024 * 1024),
+                static_cast<unsigned long long>(file_size) / (1024 * 1024));
+    } catch (...) {
+        fprintf(stderr, "\r  %s: 100%% - verifying...   \n", param.filename);
+    }
 
-    if (!VerifySHA256(dl_path, param.expected_sha256_hex)) {
+    if (!VerifySHA256(dl_path, param.expected_sha256_hex, param.filename)) {
         std::cerr << "Failed to verify parameter checksums for " << param.filename << "!" << std::endl;
         fs::remove(dl_path);
         return false;
