@@ -27,7 +27,12 @@
 namespace fs = boost::filesystem;
 
 // Parameters from zcutil/fetch-params.sh
-static const char* const SPROUT_URL = "https://z.cash/downloads";
+static const char* const DOWNLOAD_URLS[] = {
+    "https://z.cash/downloads",
+    "https://omega.decker.im/downloads",
+    "https://komodoplatform.com/downloads"
+};
+static const size_t NUM_DOWNLOAD_URLS = sizeof(DOWNLOAD_URLS) / sizeof(DOWNLOAD_URLS[0]);
 static const char* const SAPLING_SPEND_NAME = "sapling-spend.params";
 static const char* const SAPLING_OUTPUT_NAME = "sapling-output.params";
 static const char* const SAPLING_SPROUT_GROTH16_NAME = "sprout-groth16.params";
@@ -216,6 +221,9 @@ static bool DownloadFile(const std::string& url, const fs::path& output_path)
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);  // curl built without SSL; integrity checked via SHA256
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);  // 10 seconds to establish connection
+    curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 32768L);   // 32 KB/s minimum speed
+    curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 30L);       // abort if below limit for 30 seconds
     curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, ProgressCallback);
     std::string progress_name = output_path.filename().string();
@@ -257,13 +265,24 @@ static bool FetchParam(const fs::path& params_dir, const ParamInfo& param)
         fs::remove(output_path);
     }
 
-    std::string url = std::string(SPROUT_URL) + "/" + param.filename;
-    std::cout << "Retrieving: " << url << std::endl;
-
     fs::path dl_path = output_path;
     dl_path += ".dl";
 
-    if (!DownloadFile(url, dl_path)) {
+    bool download_ok = false;
+    for (size_t url_idx = 0; url_idx < NUM_DOWNLOAD_URLS; url_idx++) {
+        std::string url = std::string(DOWNLOAD_URLS[url_idx]) + "/" + param.filename;
+        std::cout << "Retrieving: " << url << std::endl;
+
+        if (DownloadFile(url, dl_path)) {
+            download_ok = true;
+            break;
+        }
+        if (url_idx + 1 < NUM_DOWNLOAD_URLS) {
+            std::cerr << "Download failed, trying next mirror..." << std::endl;
+        }
+    }
+
+    if (!download_ok) {
         return false;
     }
 
