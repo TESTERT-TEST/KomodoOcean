@@ -94,7 +94,7 @@ if BUILD_KOMODOD
 endif
 
 if BUILD_KOMODO_UTILS
-  bin_PROGRAMS += komodo-cli komodo-tx
+  bin_PROGRAMS += komodo-cli komodo-tx fetch-params
 endif
 if ENABLE_WALLET
   bin_PROGRAMS += wallet-utility
@@ -570,6 +570,15 @@ wallet_utility_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 if TARGET_WINDOWS
 wallet_utility_SOURCES += wallet-utility-res.rc
 endif
+endif
+
+# fetch-params binary #
+if BUILD_KOMODO_UTILS
+fetch_params_SOURCES = fetch-params.cpp
+fetch_params_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+fetch_params_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+fetch_params_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+fetch_params_LDADD = $(BOOST_LIBS) $(CURL_LIBS) $(CRYPTO_LIBS)
 endif
 
 if TARGET_WINDOWS
