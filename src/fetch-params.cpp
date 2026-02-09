@@ -221,6 +221,8 @@ static bool DownloadFile(const std::string& url, const fs::path& output_path)
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);  // curl built without SSL; integrity checked via SHA256
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    // Limit to TLS 1.2: in some countries with internet censorship, TLS 1.3 is blocked due to ECH
+    // curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_MAX_TLSv1_2);
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);  // 10 seconds to establish connection
     curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 32768L);   // 32 KB/s minimum speed
     curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 30L);       // abort if below limit for 30 seconds

@@ -579,6 +579,10 @@ fetch_params_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
 fetch_params_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 fetch_params_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 fetch_params_LDADD = $(BOOST_LIBS) $(CURL_LIBS) $(CRYPTO_LIBS)
+
+if TARGET_WINDOWS
+fetch_params_SOURCES += fetch-params-res.rc
+endif
 endif
 
 if TARGET_WINDOWS
