@@ -5,11 +5,13 @@
 // Uses the same directory as zcutil/fetch-params.sh (ZC_GetBaseParamsDir).
 
 #include <cerrno>
+#include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <ctime>
 #include <iostream>
 #include <string>
+#include <thread>
 
 #include <boost/filesystem.hpp>
 #include <curl/curl.h>
@@ -314,6 +316,16 @@ static bool FetchParam(const fs::path& params_dir, const ParamInfo& param)
     return true;
 }
 
+static void PauseBeforeExit(int seconds)
+{
+    if (seconds <= 0) return;
+    for (int i = seconds; i >= 1; i--) {
+        std::cout << "\rClosing in " << i << "..." << std::flush;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    std::cout << std::endl;
+}
+
 int main(int argc, char* argv[])
 {
     (void)argc;
@@ -357,9 +369,11 @@ int main(int argc, char* argv[])
 
     if (!all_ok) {
         std::cerr << std::endl << "Failed to fetch/verify parameters!" << std::endl;
+        PauseBeforeExit(5);
         return 1;
     }
 
     std::cout << std::endl << "All parameters ready." << std::endl;
+    PauseBeforeExit(5);
     return 0;
 }
