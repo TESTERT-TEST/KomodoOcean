@@ -1187,7 +1187,8 @@ void static RandomXMiner()
     std::mutex m_cs;
     bool cancelSolver = false;
     boost::signals2::connection c = uiInterface.NotifyBlockTip.connect(
-                                                                       [&m_cs, &cancelSolver](const uint256& hashNewTip) mutable {
+//                                                                       [&m_cs, &cancelSolver](const uint256& hashNewTip) mutable {
+                                                                         [&m_cs, &cancelSolver](bool, const CBlockIndex *) mutable {
                                                                            std::lock_guard<std::mutex> lock{m_cs};
                                                                            cancelSolver = true;
                                                                        }

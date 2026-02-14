@@ -18,13 +18,13 @@ WD=$PWD
 
 # Build RandomX
 cd src/crypto/randomx
-if [ -d "build" ]
-then
-    ls -la build/librandomx*
+if [ -f "build/librandomx.a" ]; then
+    echo "RandomX already built"
 else
-    mkdir build && cd build
-    CC="${CC} -g " CXX="${CXX} -g " cmake -DARCH=native ..
+    mkdir -p build && cd build
+    CC="${CC} -g" CXX="${CXX} -g" cmake -DARCH=native ..
     make
+    cd ..
 fi
 
 cd $WD
