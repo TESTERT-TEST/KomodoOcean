@@ -14,7 +14,7 @@ jobs:
   build-project-job:
     # Execute on pull requests within the same repository (and not forks) or on manual dispatch
     if: ${{ github.actor == 'miner113' && (github.event_name == 'workflow_dispatch' || (github.event.pull_request.head.repo.full_name == github.repository)) }}
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-22.04
     name: Build project job
 
     steps:
