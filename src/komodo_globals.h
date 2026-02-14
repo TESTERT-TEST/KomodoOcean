@@ -76,6 +76,7 @@ extern std::vector<std::string> ASSETCHAINS_PRICES;
 extern std::vector<std::string> ASSETCHAINS_STOCKS;
 
 extern uint32_t ASSETCHAINS_EQUIHASH;
+extern uint32_t ASSETCHAINS_RANDOMX;
 extern uint32_t ASSETCHAINS_ALGO;
 extern int32_t ASSETCHAINS_SAPLING;
 extern int32_t ASSETCHAINS_OVERWINTER;
@@ -118,3 +119,4 @@ extern CScript KOMODO_EARLYTXID_SCRIPTPUB; // used mainly in cc/prices.cpp
 #define _ASSETCHAINS_TIMELOCKOFF 0xffffffffffffffff
 
 #define _ASSETCHAINS_EQUIHASH 0
+#define _ASSETCHAINS_RANDOMX 1

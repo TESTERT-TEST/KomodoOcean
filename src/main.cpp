@@ -5155,8 +5155,19 @@ bool CheckBlockHeader(int32_t *futureblockp,int32_t height,CBlockIndex *pindex, 
     // Check Equihash solution is valid
     if ( fCheckPOW )
     {
-        if ( !CheckEquihashSolution(&blockhdr, Params()) )
-            return state.DoS(100, error("CheckBlockHeader(): Equihash solution invalid"),REJECT_INVALID, "invalid-solution");
+        // Genesis block (height 0)
+    if (pindex && pindex->nHeight == 0) {
+        // Nothing to check
+    }
+    else if (ASSETCHAINS_RANDOMX) {
+        // RandomX 
+        if (!CheckRandomXSolution(&blockhdr, Params().GetConsensus(), pindex ? pindex->pprev : nullptr))
+            return state.DoS(100, error("CheckBlockHeader(): RandomX solution invalid"),REJECT_INVALID, "invalid-randomx-solution");
+    } else {
+        // Equihash
+        if (!CheckEquihashSolution(&blockhdr, Params()))
+            return state.DoS(100, error("CheckBlockHeader(): Equihash solution invalid"),REJECT_INVALID, "invalid-equihash-solution");
+    }
     }
     // Check proof of work matches claimed amount
     /*komodo_index2pubkey33(pubkey33,pindex,height);

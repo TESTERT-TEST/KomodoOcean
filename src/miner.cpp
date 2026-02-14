@@ -39,7 +39,9 @@
 #include "consensus/validation.h"
 #ifdef ENABLE_MINING
 #include "crypto/equihash.h"
+#include "crypto/randomx_wrapper.h"
 #endif
+#include "rpc/net.h"
 #include "hash.h"
 #include "key_io.h"
 #include "main.h"
@@ -129,6 +131,8 @@ public:
         }
     }
 };
+
+extern uint32_t ASSETCHAINS_RANDOMX;
 
 void UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev)
 {
@@ -1136,6 +1140,343 @@ CBlockIndex *get_chainactive(int32_t height)
 
 int32_t gotinvalid;
 
+class RandomXSolverCanceledException : public std::exception
+{
+    virtual const char* what() const throw() {
+        return "RandomX solver was canceled";
+    }
+};
+
+enum RandomXSolverCancelCheck
+{
+    Reason1,
+    Reason2
+};
+
+// RandomX interval and lag now provided by wrapper:
+// RandomX_GetEpochInterval() and RandomX_GetEpochLag()
+
+
+
+#ifdef ENABLE_WALLET
+void static RandomXMiner(CWallet *pwallet)
+#else
+void static RandomXMiner()
+#endif
+{
+    LogPrintf("KomodoRandomXMiner started\n");
+    SetThreadPriority(THREAD_PRIORITY_LOWEST);
+    RenameThread("komodo-randomx");
+    const CChainParams& chainparams = Params();
+
+#ifdef ENABLE_WALLET
+    // Each thread has its own key
+    CReserveKey reservekey(pwallet);
+#endif
+    // Each thread has its own counter
+    unsigned int nExtraNonce = 0;
+
+    int32_t gpucount=KOMODO_MAXGPUCOUNT;
+    while ( (ASSETCHAIN_INIT == 0 || KOMODO_INITDONE == 0) )
+    {
+        sleep(1);
+        if ( komodo_baseid(chainName.symbol().c_str()) < 0 )
+            break;
+    }
+
+    std::mutex m_cs;
+    bool cancelSolver = false;
+    boost::signals2::connection c = uiInterface.NotifyBlockTip.connect(
+                                                                       [&m_cs, &cancelSolver](const uint256& hashNewTip) mutable {
+                                                                           std::lock_guard<std::mutex> lock{m_cs};
+                                                                           cancelSolver = true;
+                                                                       }
+                                                                       );
+    miningTimer.start();
+
+    // Track current seed for epoch change detection
+    uint256 currentSeed;
+    currentSeed.SetNull();
+
+    try {
+        LogPrintf("%s: mining %s with randomx\n", chainName.symbol().c_str());
+
+        while (true)
+        {
+            LogPrintf("%s: start mining loop on %s with nExtraNonce=%u\n", chainName.symbol().c_str(), nExtraNonce);
+
+            if (chainparams.MiningRequiresPeers()) {
+
+                miningTimer.stop();
+                do {
+                    bool fvNodesEmpty;
+                    {
+                        //LOCK(cs_vNodes);
+                        fvNodesEmpty = vNodes.empty();
+                    }
+                    if (!fvNodesEmpty )
+                        break;
+                    MilliSleep(15000);
+
+
+                } while (true);
+
+                miningTimer.start();
+            }
+
+            unsigned int nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
+            CBlockIndex* pindexPrev;
+            {
+                LOCK(cs_main);
+                pindexPrev = chainActive.Tip();
+            }
+
+            if (pindexPrev == nullptr) {
+                fprintf(stderr,"%s: null pindexPrev, trying again...\n",__func__);
+                MilliSleep(1000);
+                continue;
+            }
+
+            if ( Mining_height != pindexPrev->nHeight+1 )
+            {
+                Mining_height = pindexPrev->nHeight+1;
+                Mining_start = (uint32_t)time(NULL);
+            }
+
+            // Calculate seed using wrapper and detect epoch changes
+            uint64_t seedHeight = RandomX_SeedHeight(Mining_height);
+            uint256 newSeed;
+
+            if (seedHeight == 0) {
+                // Genesis epoch - use sentinel (wrapper will use chain-specific genesis key)
+                newSeed.SetNull();
+                *newSeed.begin() = 0x08;
+            } else {
+                // Get seed block hash
+                newSeed = chainActive[seedHeight]->GetBlockHash();
+            }
+
+            // Update main seed if epoch changed
+            if (newSeed != currentSeed) {
+                LogPrintf("%s: epoch change - updating seed to height %lu\n", seedHeight);
+                RandomX_SetMainSeedHash(newSeed.begin(), 32);
+                currentSeed = newSeed;
+            }
+
+            // Wrapper handles cache, dataset, and VM management automatically
+#ifdef ENABLE_WALLET
+            CBlockTemplate *ptr = CreateNewBlockWithKey(reservekey, pindexPrev->nHeight+1, gpucount, 0);
+#else
+            CBlockTemplate *ptr = CreateNewBlockWithKey();
+#endif
+
+            LogPrintf("%s: created new block with Mining_start=%u\n",Mining_start);
+            if ( ptr == 0 )
+            {
+                if ( !GetBoolArg("-gen",false))
+                {
+                    miningTimer.stop();
+                    c.disconnect();
+                    LogPrintf("KomodoRandomXMiner terminated\n");
+                    return;
+                }
+                static uint32_t counter;
+                if ( counter++ < 10 )
+                    fprintf(stderr,"RandomXMiner: created illegal blockB, retry with counter=%u\n", counter);
+                sleep(1);
+                continue;
+            }
+            // fprintf(stderr,"RandomXMiner: getting block template\n");
+            LogPrintf("%s: getting block template\n");
+
+            unique_ptr<CBlockTemplate> pblocktemplate(ptr);
+            if (!pblocktemplate.get())
+            {
+                if (GetArg("-mineraddress", "").empty()) {
+                    LogPrintf("Error in KomodoRandomXMiner: Keypool ran out, please call keypoolrefill before restarting the mining thread\n");
+                } else {
+                    // Should never reach here, because -mineraddress validity is checked in init.cpp
+                    LogPrintf("Error in KomodoRandomXMiner: Invalid -mineraddress\n");
+                }
+                return;
+            }
+            CBlock *pblock = &pblocktemplate->block;
+
+            if ( ASSETCHAINS_REWARD[0] == 0 && !ASSETCHAINS_LASTERA )
+            {
+                if ( pblock->vtx.size() == 1 && pblock->vtx[0].vout.size() == 1 && Mining_height > ASSETCHAINS_MINHEIGHT )
+                {
+                    static uint32_t counter;
+                    if ( counter++ < 10 )
+                        fprintf(stderr,"skip generating %s on-demand block, no tx avail\n",chainName.symbol().c_str());
+                    sleep(10);
+                    continue;
+                } else fprintf(stderr,"%s vouts.%d mining.%d vs %d\n",chainName.symbol().c_str(),(int32_t)pblock->vtx[0].vout.size(),Mining_height,ASSETCHAINS_MINHEIGHT);
+            }
+            LogPrintf("%s: incrementing extra nonce\n");
+            IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
+            // fprintf(stderr,"RandomXMiner: %u transactions in block\n",(int32_t)pblock->vtx.size());
+            LogPrintf("Running KomodoRandomXMiner with %u transactions in block (%u bytes)\n",pblock->vtx.size(),::GetSerializeSize(*pblock,SER_NETWORK,PROTOCOL_VERSION));
+
+            // Search
+            uint32_t savebits;
+            int64_t nStart = GetTime();
+            pblock->nBits  = GetNextWorkRequired(pindexPrev, pblock, Params().GetConsensus());
+            savebits = pblock->nBits;
+            HASHTarget = arith_uint256().SetCompact(savebits);
+            Mining_start = 0;
+            gotinvalid = 0;
+
+            while (true)
+            {
+                if ( gotinvalid != 0 ) {
+                    fprintf(stderr,"KomodoRandomXMiner: gotinvalid=%d\n",gotinvalid);
+                    break;
+                }
+                komodo_longestchain();
+
+                // fprintf(stderr,"RandomXMiner: solving with nNonce = %s\n",pblock->nNonce.ToString().c_str());
+                LogPrintf("%s: solving with nNonce = %s\n",pblock->nNonce.ToString().c_str());
+                arith_uint256 hashTarget;
+                hashTarget = HASHTarget;
+
+                CDataStream randomxInput(SER_NETWORK, PROTOCOL_VERSION);
+                // Use the current block as randomx input
+                randomxInput << pblocktemplate->block;
+
+                LogPrintf("%s: randomxInput size=%zu\n", randomxInput.size());
+
+                // Calculate RandomX hash using wrapper
+                LogPrintf("%s: calculating randomx hash\n");
+                uint256 randomxHash;
+                if (!RandomX_Hash_Block(&randomxInput[0], randomxInput.size(), randomxHash)) {
+                    LogPrintf("RandomXMiner: RandomX_Hash_Block failed!\n");
+                    break;
+                }
+                LogPrintf("%s: calculated randomx hash\n");
+
+                LogPrintf("%s: randomxHash=%s\n", randomxHash.GetHex().c_str());
+
+                // Use randomx hash to build a valid block
+                std::function<bool(std::vector<unsigned char>)> validBlock =
+#ifdef ENABLE_WALLET
+                [&pblock, &hashTarget, &pwallet, &reservekey, &m_cs, &cancelSolver, &chainparams]
+#else
+                [&pblock, &hashTarget, &m_cs, &cancelSolver, &chainparams]
+#endif
+                (std::vector<unsigned char> soln) {
+                    int32_t z; arith_uint256 h; CBlock B;
+                    // Write the solution to the hash and compute the result.
+                    LogPrintf("%s: Checking solution against target\n");
+                    pblock->nSolution = soln;
+                    solutionTargetChecks.increment();
+                    B = *pblock;
+                    h = UintToArith256(B.GetHash());
+
+                    if ( h > hashTarget )
+                    {
+                        LogPrintf("%s: h > hashTarget");
+                        return false;
+                    }
+
+                    CValidationState state;
+                    //{ LOCK(cs_main);
+                    if ( !TestBlockValidity(state,B, chainActive.Tip(), true, false))
+                    {
+                        h = UintToArith256(B.GetHash());
+                        fprintf(stderr,"KomodoRandomXMiner: Invalid randomx block mined, try again ");
+                        for (z=31; z>=0; z--)
+                            fprintf(stderr,"%02x",((uint8_t *)&h)[z]);
+                        gotinvalid = 1;
+                        fprintf(stderr,"\n");
+                        return(false);
+                    }
+                    //}
+                    SetThreadPriority(THREAD_PRIORITY_NORMAL);
+                    LogPrintf("KomodoRandomXMiner:\n");
+                    LogPrintf("proof-of-work found  \n  hash: %s  \ntarget: %s\n", B.GetHash().GetHex(), HASHTarget.GetHex());
+#ifdef ENABLE_WALLET
+                    if (ProcessBlockFound(&B, *pwallet, reservekey)) {
+#else
+                        if (ProcessBlockFound(&B)) {
+#endif
+                            // Ignore chain updates caused by us
+                            std::lock_guard<std::mutex> lock{m_cs};
+                            cancelSolver = false;
+                        }
+                        SetThreadPriority(THREAD_PRIORITY_LOWEST);
+                        // In regression test mode, stop mining after a block is found.
+                        if (chainparams.MineBlocksOnDemand()) {
+                            // Increment here because throwing skips the call below
+                            // TODO: equivalent of ehSolverRuns.increment();
+                            throw boost::thread_interrupted();
+                        }
+                        return true;
+                    };
+                    std::function<bool(RandomXSolverCancelCheck)> cancelled = [&m_cs, &cancelSolver](RandomXSolverCancelCheck pos) {
+                        std::lock_guard<std::mutex> lock{m_cs};
+                        return cancelSolver;
+                    };
+
+                    try { 
+                        // Use the randomX hash as the block solution
+                        std::vector<unsigned char> sol_char(randomxHash.begin(), randomxHash.end());
+                        bool found = validBlock(sol_char);
+                        if (found) {
+                            LogPrintf("%s: found solution!\n");
+                            // If we find a POW solution, do not try other solutions
+                            // because they become invalid as we created a new block in blockchain.
+                            break;
+                        } else {
+                            LogPrintf("%s: solution not found, validBlock=false\n");
+                        }
+                    } catch (RandomXSolverCanceledException&) {
+                        LogPrintf("KomodoRandomXMiner solver canceled\n");
+                        std::lock_guard<std::mutex> lock{m_cs};
+                        cancelSolver = false;
+                    }
+
+                    boost::this_thread::interruption_point();
+
+                    if (vNodes.empty() && chainparams.MiningRequiresPeers())
+                    {
+                        if ( Mining_height > ASSETCHAINS_MINHEIGHT )
+                        {
+                            fprintf(stderr,"%s: no nodes, break\n", __func__);
+                            break;
+                        }
+                    }
+                    if ((UintToArith256(pblock->nNonce) & 0xffff) == 0xffff)
+                    {
+                        fprintf(stderr,"%s: nonce & 0xffff == 0xffff, break\n", __func__);
+                        break;
+                    }
+                    // Update nNonce and nTime
+                    pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
+                    pblock->nBits = savebits;
+                }
+                // Wrapper manages VM lifecycle, no manual cleanup needed
+            }
+
+   } catch (const boost::thread_interrupted&) {
+       miningTimer.stop();
+       c.disconnect();
+       // Wrapper handles cleanup via RandomX_Shutdown() called from init.cpp
+       LogPrintf("KomodoRandomXMiner terminated\n");
+       throw;
+   } catch (const std::runtime_error &e) {
+       miningTimer.stop();
+       c.disconnect();
+       fprintf(stderr,"KomodoRandomXMiner: runtime error: %s\n", e.what());
+       // Wrapper handles cleanup via RandomX_Shutdown() called from init.cpp
+       return;
+   }
+
+   // Wrapper handles cleanup via RandomX_Shutdown() called from init.cpp
+   miningTimer.stop();
+   c.disconnect();
+}
+
 bool check_tromp_solution(equi &eq, std::function<bool(std::vector<unsigned char>)> validBlock)
 {
     // Convert solution indices to byte array (decompress) and pass it to validBlock method.
@@ -1716,11 +2057,17 @@ void static BitcoinMiner()
         for (int i = 0; i < nThreads; i++) {
 
 #ifdef ENABLE_WALLET
-            if ( ASSETCHAINS_ALGO == ASSETCHAINS_EQUIHASH )
+            if ( ASSETCHAINS_ALGO == ASSETCHAINS_EQUIHASH ) {
                 minerThreads->create_thread(boost::bind(&BitcoinMiner, pwallet));
+			} else if (ASSETCHAINS_ALGO == ASSETCHAINS_RANDOMX ) {
+                minerThreads->create_thread(boost::bind(&RandomXMiner, pwallet));
+            }
 #else
-            if (ASSETCHAINS_ALGO == ASSETCHAINS_EQUIHASH )
+            if (ASSETCHAINS_ALGO == ASSETCHAINS_EQUIHASH ) {
                 minerThreads->create_thread(&BitcoinMiner);
+			} else if (ASSETCHAINS_ALGO == ASSETCHAINS_RANDOMX) {
+                minerThreads->create_thread(&RandomXMiner);
+            }
 #endif
         }
     }

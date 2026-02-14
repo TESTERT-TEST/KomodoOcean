@@ -25,6 +25,7 @@
 #include "chain.h"
 #include "chainparams.h"
 #include "crypto/equihash.h"
+#include "crypto/randomx_wrapper.h"
 #include "primitives/block.h"
 #include "streams.h"
 #include "uint256.h"
@@ -595,6 +596,91 @@ bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& param
 
     if (!isValid)
         return error("CheckEquihashSolution(): invalid solution");
+
+    return true;
+}
+
+bool CheckRandomXSolution(const CBlockHeader *pblock, const Consensus::Params& params,
+                         const CBlockIndex* pindexPrev)
+{
+    if (!ASSETCHAINS_RANDOMX)
+        return true;
+
+    // Verify solution is 32 bytes (RandomX hash size)
+    if (pblock->nSolution.size() != 32) {
+        return error("CheckRandomXSolution(): Invalid solution size %d, expected 32", pblock->nSolution.size());
+    }
+
+    // Serialize header (minus solution) + nonce for RandomX input
+    CEquihashInput I{*pblock};
+    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+    ss << I;
+    ss << pblock->nNonce;
+
+    uint64_t blockHeight = 0;
+    uint256 seedHash;
+    uint256 hash;
+
+    if (pindexPrev != nullptr) {
+        blockHeight = pindexPrev->nHeight+1;
+        uint64_t seedHeight = RandomX_SeedHeight(blockHeight);
+
+        if (seedHeight == 0) {
+            // Genesis epoch - use genesis seed
+            seedHash.SetNull();
+            *seedHash.begin() = 0x08;
+        } else {
+            // Get seed block hash from chain
+            const CBlockIndex* pindexSeed = pindexPrev->GetAncestor(seedHeight);
+            if (!pindexSeed) {
+                return error("CheckRandomXSolution(): Cannot find seed block at height %d", seedHeight);
+            }
+            seedHash = pindexSeed->GetBlockHash();
+        }
+
+        // Calculate RandomX hash with specific seed
+        if (!RandomX_Hash_WithSeed(seedHash.begin(), 32, &ss[0], ss.size(), hash.begin())) {
+            return error("CheckRandomXSolution(): RandomX_Hash_WithSeed failed for height %d", blockHeight);
+        }
+
+        // Verify stored solution matches calculated hash
+        uint256 storedHash;
+        memcpy(storedHash.begin(), pblock->nSolution.data(), 32);
+
+        if (hash != storedHash) {
+            LogPrintf("CheckRandomXSolution: Hash mismatch at height %d\n", blockHeight);
+            LogPrintf("  Seed height: %d, Seed hash: %s\n", seedHeight, seedHash.GetHex());
+            LogPrintf("  Calculated: %s\n", hash.GetHex());
+            LogPrintf("  Stored:     %s\n", storedHash.GetHex());
+            return false;
+        }
+    } else {
+        // No pindexPrev - use current main seed (for mining/mempool)
+        if (!RandomX_Hash_Block(&ss[0], ss.size(), hash)) {
+            return error("CheckRandomXSolution(): RandomX_Hash_Block failed");
+        }
+
+        uint256 storedHash;
+        memcpy(storedHash.begin(), pblock->nSolution.data(), 32);
+
+        if (hash != storedHash) {
+            return error("CheckRandomXSolution(): Hash mismatch (no pindexPrev)");
+        }
+    }
+
+    // Verify RandomX hash meets difficulty target
+    // This is essential for legacy chains (DRAGONX/TUMIN) where GetHash() returns SHA256D
+    arith_uint256 bnTarget;
+    bool fNegative, fOverflow;
+    bnTarget.SetCompact(pblock->nBits, &fNegative, &fOverflow);
+
+    if (fNegative || fOverflow || bnTarget == 0) {
+        return error("CheckRandomXSolution(): Invalid nBits");
+    }
+
+    if (UintToArith256(hash) > bnTarget) {
+        return error("CheckRandomXSolution(): RandomX hash doesn't meet target");
+    }
 
     return true;
 }

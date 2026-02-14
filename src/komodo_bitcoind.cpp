@@ -1877,10 +1877,21 @@ int32_t komodo_checkPOW(int64_t stakeTxValue, int32_t slowflag,CBlock *pblock,in
     uint256 hash,merkleroot; arith_uint256 bnTarget,bhash; bool fNegative,fOverflow; uint8_t *script,pubkey33[33],pubkeys[64][33]; int32_t i,scriptlen,possible,PoSperc,is_PoSblock=0,n,failed = 0,notaryid = -1; int64_t checktoshis,value; CBlockIndex *pprev;
     if ( KOMODO_TEST_ASSETCHAIN_SKIP_POW == 0 && Params().NetworkIDString() == "regtest" )
         KOMODO_TEST_ASSETCHAIN_SKIP_POW = 1;
-    if ( !CheckEquihashSolution(pblock, Params()) )
-    {
-        LogPrintf("komodo_checkPOW slowflag.%d ht.%d CheckEquihashSolution failed\n",slowflag,height);
-        return(-1);
+    if (ASSETCHAINS_RANDOMX) {
+    // RandomX 
+    if (height > 0) {
+        if (!CheckRandomXSolution(pblock, Params().GetConsensus(), nullptr)) {
+            LogPrintf("komodo_checkPOW slowflag.%d ht.%d CheckRandomXSolution failed\n",slowflag, height);
+            return -1;
+        }
+    }
+    
+   } else {
+    // Equihash
+    if (!CheckEquihashSolution(pblock, Params())) {
+        LogPrintf("komodo_checkPOW slowflag.%d ht.%d CheckEquihashSolution failed\n",slowflag, height);
+        return -1;
+    }
     }
     hash = pblock->GetHash();
     bnTarget.SetCompact(pblock->nBits,&fNegative,&fOverflow);

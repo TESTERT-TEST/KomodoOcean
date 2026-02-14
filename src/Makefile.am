@@ -38,6 +38,7 @@ LIBSECP256K1=secp256k1/libsecp256k1.la
 LIBCRYPTOCONDITIONS=cryptoconditions/libcryptoconditions_core.la
 LIBUNIVALUE=univalue/libunivalue.la
 LIBZCASH=libzcash.a
+LIBRANDOMX=crypto/randomx/build/librandomx.a
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
@@ -298,6 +299,8 @@ libbitcoin_server_a_SOURCES = \
   notaries_staked.cpp \
   noui.cpp \
   notarisationdb.cpp \
+  numa_helper.cpp \
+  numa_helper.h \
   paymentdisclosure.cpp \
   paymentdisclosuredb.cpp \
   policy/fees.cpp \
@@ -368,6 +371,8 @@ libbitcoin_wallet_a_SOURCES = \
 crypto_libbitcoin_crypto_a_CPPFLAGS = $(BITCOIN_CONFIG_INCLUDES)
 crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/common.h \
+  crypto/cpu_features.cpp \
+  crypto/cpu_features.h \
   crypto/equihash.cpp \
   crypto/equihash.h \
   crypto/equihash.tcc \
@@ -375,6 +380,15 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/hmac_sha256.h \
   crypto/hmac_sha512.cpp \
   crypto/hmac_sha512.h \
+  crypto/msr.cpp \
+  crypto/msr.h \
+  crypto/msr_item.h \
+  crypto/randomx_fix.cpp \
+  crypto/randomx_fix.h \
+  crypto/randomx_msr.cpp \
+  crypto/randomx_msr.h \
+  crypto/randomx_wrapper.cpp \
+  crypto/randomx_wrapper.h \
   crypto/ripemd160.cpp \
   crypto/ripemd160.h \
   crypto/sha1.cpp \
@@ -530,6 +544,7 @@ komodod_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1) \
   $(LIBCRYPTOCONDITIONS) \
+  $(LIBRANDOMX) \
   $(CURL_LIBS)
 
 if ENABLE_ZMQ
@@ -551,6 +566,7 @@ komodod_LDADD += \
   $(EVENT_LIBS) \
   $(LIBZCASH) \
   $(LIBBITCOIN_CRYPTO) \
+  $(LIBRANDOMX) \
   $(LIBZCASH_LIBS)
 
 komodod_LDADD += $(LIBSECP256K1)
@@ -613,7 +629,8 @@ wallet_utility_LDADD = \
 	$(CRYPTO_LIBS) \
 	$(LIBZCASH) \
 	$(LIBZCASH_LIBS)\
-	$(LIBCRYPTOCONDITIONS)
+	$(LIBCRYPTOCONDITIONS)\
+    $(LIBRANDOMX)
 endif
 
 # zcash-tx binary #
@@ -634,7 +651,8 @@ komodo_tx_LDADD = \
   $(LIBZCASH) \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBZCASH_LIBS) \
-  $(LIBCRYPTOCONDITIONS)
+  $(LIBCRYPTOCONDITIONS) \
+  $(LIBRANDOMX)
 
 komodo_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #

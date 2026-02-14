@@ -40,6 +40,10 @@ unsigned int CalculateNextWorkRequired(arith_uint256 bnAvg,
 /** Check whether the Equihash solution in a block header is valid */
 bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams&);
 
+/** Check whether the RandomX solution in a block header is valid */
+bool CheckRandomXSolution(const CBlockHeader *pblock, const Consensus::Params& params,
+                         const CBlockIndex* pindexPrev);
+						 
 /**
  * @brief Check if given notaryid is allowed to mine a mindiff block in case of GAP
  *
