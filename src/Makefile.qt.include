@@ -465,6 +465,7 @@ qt_komodo_qt_LDADD += \
   $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_CONSENSUS) \
   $(LIBBITCOIN_CRYPTO) \
+  $(LIBRANDOMX) \
   $(LIBUNIVALUE) \
   $(LIBLEVELDB) \
   $(LIBLEVELDB_SSE42) \
@@ -490,7 +491,8 @@ qt_komodo_qt_LIBTOOLFLAGS = --tag CXX
 qt_komodo_qt_LDADD += \
   $(LIBZCASH) \
   $(LIBZCASH_LIBS) \
-  $(LIBCRYPTOCONDITIONS)
+  $(LIBCRYPTOCONDITIONS) \
+  $(LIBRANDOMX)
 
 if TARGET_DARWIN
   qt_komodo_qt_LDADD += -lc++
