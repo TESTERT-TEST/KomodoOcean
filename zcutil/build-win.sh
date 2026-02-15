@@ -6,20 +6,20 @@ CC=x86_64-w64-mingw32-gcc-posix
 PREFIX="$(pwd)/depends/$HOST"
 
 set -eu -o pipefail
-set -x
 
+set -x
 cd "$(dirname "$(readlink -f "$0")")/.."
 
+make "$@" -C ${PWD}/depends V=1 HOST=x86_64-w64-mingw32
+./autogen.sh
+CONFIG_SITE="$PWD/depends/x86_64-w64-mingw32/share/config.site" CXXFLAGS="-DCURL_STATICLIB -g0 -O2" ./configure --disable-tests --disable-bench --with-gui=qt5 --disable-bip70
 
-make "$@" -C depends V=1 HOST=$HOST
+WD=$PWD
 
-RANDOMX_DIR="src/crypto/randomx"
-RANDOMX_BUILD_DIR="$RANDOMX_DIR/build"
-RANDOMX_LIB="$RANDOMX_BUILD_DIR/librandomx.a"
-
-cd "$RANDOMX_DIR"
-if [ -f "$RANDOMX_LIB" ]; then
-    echo "RandomX: $RANDOMX_LIB"
+# Build RandomX
+cd src/crypto/randomx
+if [ -f "build/librandomx.a" ]; then
+    echo "RandomX already built"
 else
     rm -rf build
     mkdir -p build && cd build
@@ -34,16 +34,7 @@ else
     make
     cd ..
 fi
-cd "$OLDPWD"
 
-export LDFLAGS="$LDFLAGS -L$PWD/$RANDOMX_BUILD_DIR"
-export LIBS="$LIBS -lrandomx"
+cd $WD
 
-ls -la "$PWD/$RANDOMX_LIB"
-
-./autogen.sh
-CONFIG_SITE="$PWD/depends/$HOST/share/config.site" \
-    CXXFLAGS="-DCURL_STATICLIB -g0 -O2" \
-    ./configure --disable-tests --disable-bench --with-gui=qt5 --disable-bip70
-
-make "$@"
+make "$@" # V=1

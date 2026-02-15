@@ -22,5 +22,31 @@ fi
 LDFLAGS="-Wl,-no_pie" \
 CXXFLAGS="-g0 -O2" \
 CONFIG_SITE="$PWD/depends/x86_64-apple-darwin/share/config.site" ./configure --disable-tests --disable-bench --with-gui=qt5 --disable-bip70
-# make app
+
+WD=$PWD
+
+RANDOMX_DIR="src/crypto/randomx"
+RANDOMX_BUILD_DIR="$RANDOMX_DIR/build"
+RANDOMX_LIB="$RANDOMX_BUILD_DIR/librandomx.a"
+
+cd "$RANDOMX_DIR"
+if [ -f "$RANDOMX_LIB" ]; then
+    echo "RandomX already built: $RANDOMX_LIB"
+else
+    rm -rf build
+    mkdir -p build && cd build
+    # Явно задаём компиляторы и целевую систему (для кросс‑компиляции с Linux)
+    CC="${CC}" CXX="${CXX}" cmake \
+        -DCMAKE_SYSTEM_NAME=Darwin \
+        -DCMAKE_C_COMPILER="${CC}" \
+        -DCMAKE_CXX_COMPILER="${CXX}" \
+        -DCMAKE_C_FLAGS="-g" \
+        -DCMAKE_CXX_FLAGS="-g" \
+        -DARCH=native \
+        ..
+    make
+    cd ..
+fi
+cd $WD
+
 make -j$(nproc --all) # V=1
