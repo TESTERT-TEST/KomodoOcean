@@ -172,6 +172,14 @@ if true; then
     # Check if sha256sum command exists
     command -v sha256sum >/dev/null 2>&1 || { echo >&2 "ERROR: sha256sum command not found."; exit 1; }
 
+    ### macos
+    if [[ "${build_macos}" = "true" ]]; then
+        download_and_check_macos_sdk
+        delete_artefacts macos
+        bash -c 'zcutil/build-mac-cross.sh -j'$(expr $(nproc) - 1)
+        copy_release macos
+    fi
+	
     ### focal
     if [[ "${build_focal}" = "true" ]]; then
 
@@ -195,13 +203,6 @@ if true; then
         copy_release windows
     fi
 
-    ### macos
-    if [[ "${build_macos}" = "true" ]]; then
-        download_and_check_macos_sdk
-        delete_artefacts macos
-        bash -c 'zcutil/build-mac-cross.sh -j'$(expr $(nproc) - 1)
-        copy_release macos
-    fi
 else
     emulate_build
     # all environment variables of docker container are accessible here,
