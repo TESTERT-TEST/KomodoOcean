@@ -126,6 +126,7 @@ def validate_release_files(releases_dir, build_desc):
         'focal': [
             'wallet-utility',
             'komodod',
+            'fetch-params',
             'komodo-tx',
             'komodo-qt-linux',
             'komodo-cli'
@@ -133,6 +134,7 @@ def validate_release_files(releases_dir, build_desc):
         'windows': [
             'wallet-utility.exe',
             'komodod.exe',
+            'fetch-params.exe',
             'komodo-tx.exe',
             'komodo-qt-windows.exe',
             'komodo-cli.exe'
@@ -140,6 +142,7 @@ def validate_release_files(releases_dir, build_desc):
         'macos': [
             'wallet-utility',
             'komodod',
+            'fetch-params',
             'komodo-tx',
             'komodo-qt-mac',
             'komodo-cli',

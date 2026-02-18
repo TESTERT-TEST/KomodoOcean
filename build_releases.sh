@@ -60,6 +60,7 @@ delete_artefacts() {
 
     binaries=(
     "src/komodod"
+    "src/fetch-params"
     "src/wallet-utility"
     "src/komodo-tx"
     "src/komodo-cli"
@@ -92,6 +93,7 @@ copy_release() {
 
     binaries=(
     "src/komodod"
+    "src/fetch-params"
     "src/wallet-utility"
     "src/komodo-tx"
     "src/komodo-cli"
