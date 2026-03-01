@@ -1072,6 +1072,8 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     // if using block pruning, then disable txindex
     // also disable the wallet (for now, until SPV support is implemented in wallet)
     if (GetArg("-prune", 0)) {
+        return InitError(_("Prune mode is not supported."));
+        /*
         if (GetBoolArg("-txindex", DEFAULT_TXINDEX))
             return InitError(_("Prune mode is incompatible with -txindex."));
 #ifdef ENABLE_WALLET
@@ -1082,6 +1084,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                 return InitError(_("Can't run with a wallet in prune mode."));
         }
 #endif
+        */
     }
 
     // ********************************************************* Step 3: parameter-to-internal-flags
