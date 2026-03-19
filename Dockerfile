@@ -48,7 +48,7 @@ LABEL maintainer="DeckerSU <deckersu@protonmail.com>"
 SHELL ["/bin/bash", "-c"]
 
 # Latest release komodo v0.9.2-rc2
-ARG KOMODO_COMMITTISH=v0.9.2-rc2
+ARG KOMODO_COMMITTISH=v0.9.2-rc3
 ARG IS_RELEASE=false
 # DeckerSU <deckersu@protonmail.com> https://keys.openpgp.org/vks/v1/by-fingerprint/FD9A772C7300F4C894D1A819FE50480862E6451C
 ARG KOMODOD_MAINTAINER_KEYS="FD9A772C7300F4C894D1A819FE50480862E6451C"
@@ -100,8 +100,8 @@ SHELL ["/bin/bash", "-c"]
 
 WORKDIR /app
 
-# Copy komodod and fetch-params.sh
-COPY --from=komodod-builder /KomodoOcean/src/komodod /KomodoOcean/src/komodo-cli /KomodoOcean/zcutil/fetch-params.sh /app/
+# Copy komodod, fetch-params binary and fetch-params.sh
+COPY --from=komodod-builder /KomodoOcean/src/komodod /KomodoOcean/src/komodo-cli /KomodoOcean/src/fetch-params /KomodoOcean/zcutil/fetch-params.sh /app/
 # Copy entrypoint script
 COPY entrypoint.sh /app
 
@@ -119,7 +119,7 @@ RUN set -euxo pipefail \
     && rm -rf /var/{lib/apt/lists/*,cache/apt/archives/*.deb,tmp/*,log/*} /tmp/* \
     && mkdir -p /data \
     && for path in /data /app; do chown -R nobody:nogroup $path && chmod 2755 $path; done \
-    && for file in /app/{fetch-params.sh,komodod,komodo-cli}; do chmod 755 $file; done \
+    && for file in /app/{fetch-params.sh,fetch-params,komodod,komodo-cli}; do chmod 755 $file; done \
     && sed -i 's|nobody:/nonexistent|nobody:/data|' /etc/passwd
 
 VOLUME ["/data"]
