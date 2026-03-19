@@ -97,6 +97,19 @@ xcodebuild -version
 
 **Note:** The current build is confirmed on macOS Tahoe 26.2 (25C56), with Xcode 15.1 and clang 5.0.0.
 
+#### Version Numbering
+
+The version string is controlled by `_CLIENT_VERSION_BUILD` in `configure.ac`. The suffix is derived as follows:
+
+| `_CLIENT_VERSION_BUILD` | Version suffix | Example (`MAJOR.MINOR.REVISION` = `0.9.2`) |
+|---|---|---|
+| 0 – 24 | `-beta<BUILD>` | `0.9.2-beta3` |
+| 25 – 49 | `-rc<BUILD - 24>` | `0.9.2-rc2` (BUILD=26) |
+| 50 | *(none — stable release)* | `0.9.2` |
+| 51+ | `-<BUILD - 50>` | `0.9.2-1` (BUILD=51) |
+
+---
+
 #### Windows (Cross-compile)
 Use a debian cross-compilation setup with mingw for windows and run:
 ```shell
